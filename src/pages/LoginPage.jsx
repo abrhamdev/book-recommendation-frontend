@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
-import { useState } from 'react';
-import { Link,useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MoveLeftIcon } from 'lucide-react';
 import { FcGoogle } from "react-icons/fc";
@@ -8,10 +8,12 @@ import { handleGoogleLogin } from '../utils/firebase';
 import { toast } from 'react-toastify';
 import { API_URL } from '../../API_URL';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const navigate=useNavigate();
+  const { user, login } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -26,29 +28,29 @@ const LoginPage = () => {
   };
 
   const onGoogleLoginClick = async () => {
-      try {
-        const response = await handleGoogleLogin();
-        toast.success(response.message);
-        localStorage.setItem('NR_token', response.token);
-        navigate('/');
-      } catch (err) {
-        const errorMsg = err.response?.data?.message || err.message || "Google Sign-In failed!";
-        toast.error(errorMsg);
-      }
-    };
+    try {
+      const response = await handleGoogleLogin();
+      toast.success(response.message);
+      login({ token: response.token });
+      navigate('/');
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || err.message || "Google Sign-In failed!";
+      toast.error(errorMsg);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-   try{ const response= await axios.post(`${API_URL}/users/login`,formData);
-    
-    toast.success(response.data.message || "Login successfully!");
-    localStorage.setItem('NR_token', response.data.token);
-    navigate('/');
-  }catch(error){
-    toast.error(error.response?.data?.message || "Login Faild!");
-  }
-    
+    try {
+      const response = await axios.post(`${API_URL}/users/login`, formData);
+      toast.success(response.data.message || "Login successful!");
+      login({ token: response.data.token });
+      navigate('/');
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Login Failed!");
+    }
   };
+
 
   return (
     <div className="min-h-screen bg-gray-300 py-8 px-4 sm:px-6 lg:px-8">

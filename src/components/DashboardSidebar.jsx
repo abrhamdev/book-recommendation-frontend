@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
 import {
   HomeIcon,
@@ -16,6 +17,13 @@ import {
 const DashboardSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user } = useAuth();
+  const token = localStorage.getItem('NR_token');
+
+  // Only render sidebar for authenticated users
+  if (!user || !token) {
+    return null;
+  }
 
   const navigation = [
     { name: 'Home', href: '/dashboard', icon: HomeIcon, description: 'Your reading dashboard' },

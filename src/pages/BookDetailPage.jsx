@@ -13,6 +13,8 @@ import { Link, useParams } from "react-router-dom";
 import { API_URL } from "../../API_URL";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { FaFacebook, FaFacebookF } from "react-icons/fa";
+import { X } from "lucide-react";
 
 const BookDetailPage = () => {
   const [book, setBook] = useState({});
@@ -395,13 +397,13 @@ const BookDetailPage = () => {
                             onClick={() => handleSocialShare("facebook")}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-md"
                           >
-                            <ArrowTopRightOnSquareIcon className="h-5 w-5" />
+                            <FaFacebook className="h-5 w-5" />
                           </button>
                           <button
                             onClick={() => handleSocialShare("twitter")}
                             className="p-2 text-blue-400 hover:bg-blue-50 rounded-md"
                           >
-                            <ArrowTopRightOnSquareIcon className="h-5 w-5" />
+                            <X className="h-5 w-5 text-black" />
                           </button>
                           <button
                             onClick={() => handleSocialShare("copy")}

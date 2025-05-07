@@ -1,9 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
 
 const PreferencesPage = () => {
+  // Progress calculation
+  const calculateProgress = () => {
+    let progress = 0;
+    if (formData.languages.length > 0) progress += 25;
+    if (formData.genres.length > 0) progress += 25;
+    if (formData.ageGroup) progress += 25;
+    if (formData.bookLength) progress += 25;
+    return progress;
+  };
   const navigate = useNavigate();
+  const { user, setPreferences } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
     languages: [],
@@ -63,23 +75,40 @@ const PreferencesPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Here you would typically send the formData to your backend
-    console.log('Form submitted:', formData);
-    navigate('/'); // Redirect to home page after submission
+  const handleSubmit = () => {
+    try {
+      // Validate form data
+      if (formData.languages.length === 0) {
+        toast.error('Please select at least one language');
+        return;
+      }
+      if (formData.genres.length === 0) {
+        toast.error('Please select at least one genre');
+        return;
+      }
+
+      // Save preferences and redirect to dashboard
+      setPreferences(formData);
+      toast.success('Preferences saved successfully!');
+    } catch (error) {
+      toast.error('Failed to save preferences');
+    }
   };
 
   const nextStep = () => {
     if (currentStep === 0 && formData.languages.length === 0) {
-      alert('Please select at least one language');
+      toast.error('Please select at least one language');
       return;
     }
     if (currentStep === 1 && formData.genres.length === 0) {
-      alert('Please select at least one genre');
+      toast.error('Please select at least one genre');
       return;
     }
-    setCurrentStep(prev => prev + 1);
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      handleSubmit();
+    }
   };
 
   const prevStep = () => {
@@ -272,13 +301,24 @@ const PreferencesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white mb-3">Reading Preferences</h1>
-          <p className="text-lg text-blue-100">Help us personalize your reading experience</p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 py-8 px-4 sm:px-6 lg:px-8">
+      {/* Progress Bar */}
+      <div className="fixed top-0 left-0 w-full h-2 bg-gray-200">
+        <div 
+          className="h-full bg-blue-500 transition-all duration-500"
+          style={{ width: `${calculateProgress()}%` }}
+        />
+      </div>
 
+      {/* Welcome Message */}
+      <div className="max-w-3xl mx-auto text-center mb-12">
+        <h1 className="text-4xl font-bold text-white mb-4">Welcome to Your Reading Journey</h1>
+        <p className="text-blue-200 text-lg">
+          Let's personalize your experience to help you discover books you'll love.
+        </p>
+      </div>
+
+      <div className="max-w-4xl mx-auto">
         <div className="mb-10">
           <div className="flex justify-between mb-3">
             {steps.map((_, index) => (
@@ -295,7 +335,7 @@ const PreferencesPage = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white/10 backdrop-blur-sm rounded-2xl shadow-xl p-8">
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="bg-white/10 backdrop-blur-sm rounded-2xl shadow-xl p-8">
           <AnimatePresence mode="wait">
             {renderStep()}
           </AnimatePresence>
