@@ -1,3 +1,3 @@
-export const API_URL='http://192.168.137.1:5001'
+export const API_URL='http://localhost:5001'
 
-export const SOCKET_URL='http://192.168.137.1:5004';
+export const SOCKET_URL='http://localhost:5004';
