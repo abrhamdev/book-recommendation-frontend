@@ -34,7 +34,7 @@ const LoginPage = () => {
       login({ token: response.token });
       navigate('/');
     } catch (err) {
-      const errorMsg = err.response?.data?.message || err.message || "Google Sign-In failed!";
+      const errorMsg ="Something Went Wrong!";
       toast.error(errorMsg);
     }
   };

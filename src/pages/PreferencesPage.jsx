@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import axios from 'axios';
+import { API_URL } from '../../API_URL';
 
 const PreferencesPage = () => {
   // Progress calculation
@@ -75,9 +77,9 @@ const PreferencesPage = () => {
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async() => {
+    const token = localStorage?.getItem("NR_token");
     try {
-      // Validate form data
       if (formData.languages.length === 0) {
         toast.error('Please select at least one language');
         return;
@@ -87,11 +89,16 @@ const PreferencesPage = () => {
         return;
       }
 
-      // Save preferences and redirect to dashboard
+       const response= await axios.post(`${API_URL}/users/me/preference`, formData,{
+          headers:{
+            Authorization: `Bearer ${token}`,
+        }});
+  
+
       setPreferences(formData);
-      toast.success('Preferences saved successfully!');
+      toast.success(response.data.message);
     } catch (error) {
-      toast.error('Failed to save preferences');
+      toast.error(error?.response?.message || 'Failed to save preferences');
     }
   };
 

@@ -17,6 +17,7 @@ import AboutUs from "./pages/aboutUs";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from './components/PublicRoute';
+import ReadingListPage from "./pages/Dashboard/ReadingList";
 
 function App() {
   return (
@@ -45,12 +46,25 @@ function App() {
 
           {/* Protected routes with Layout - Only accessible after preferences are set */}
           <Route element={<Layout />}>
-            <Route path="/dashboard" element={<UserDashboard />} />
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <UserDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/readinglist" element={
+              <ProtectedRoute>
+                <ReadingListPage />
+              </ProtectedRoute>
+            } />
             <Route path="/book/:id" element={<BookDetailPage />} />
             <Route path="/search" element={<SearchResultsPage />} />
             <Route path="/discover" element={<DiscoverPage />} />
             <Route path="/community/bookclub" element={<BookClubsPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            } />
             <Route path="/underdevelopment" element={<FeatureUnderDevelopment />} />
           </Route>
         </Routes>

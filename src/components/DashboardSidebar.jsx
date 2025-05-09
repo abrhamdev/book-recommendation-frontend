@@ -27,12 +27,11 @@ const DashboardSidebar = () => {
 
   const navigation = [
     { name: 'Home', href: '/dashboard', icon: HomeIcon, description: 'Your reading dashboard' },
-    { name: 'Reading List', href: '/dashboard/books', icon: BookOpenIcon, description: 'Your reading collection' },
+    { name: 'Reading List', href: '/dashboard/readinglist', icon: BookOpenIcon, description: 'Your reading collection' },
     { name: 'Stats', href: '/dashboard/stats', icon: ChartBarIcon, description: 'Reading analytics' },
     { name: 'Community', href: '/community/bookClub', icon: UserGroupIcon, description: 'Connect with others' },
     { name: 'For You', href: '/dashboard/recommendations', icon: StarIcon, description: 'Personalized picks' },
     { name: 'Activity', href: '/dashboard/activity', icon: BellIcon, description: 'Recent updates' },
-    { name: 'Collections', href: '/dashboard/collections', icon: BookmarkIcon, description: 'Organized shelves' },
   ];
 
   const isActive = (path) => location.pathname === path;
