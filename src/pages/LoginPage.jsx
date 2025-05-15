@@ -34,7 +34,7 @@ const LoginPage = () => {
       login({ token: response.token });
       navigate('/');
     } catch (err) {
-      const errorMsg ="Something Went Wrong!";
+      const errorMsg = err.response?.data?.message || err.message || "Google Sign-In failed!";
       toast.error(errorMsg);
     }
   };
@@ -51,6 +51,11 @@ const LoginPage = () => {
     }
   };
 
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   return (
     <div className="min-h-screen bg-gray-300 py-8 px-4 sm:px-6 lg:px-8">
