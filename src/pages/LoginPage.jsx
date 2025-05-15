@@ -50,12 +50,7 @@ const LoginPage = () => {
       toast.error(error.response?.data?.message || "Login Failed!");
     }
   };
-
-  useEffect(() => {
-    if (user) {
-      navigate('/');
-    }
-  }, [user, navigate]);
+ 
 
   return (
     <div className="min-h-screen bg-gray-300 py-8 px-4 sm:px-6 lg:px-8">
