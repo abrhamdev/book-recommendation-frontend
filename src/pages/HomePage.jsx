@@ -106,11 +106,10 @@ const HomePage = () => {
       <div className="relative h-[600px] overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80"
+            src="/images/susan-q-yin-2JIvboGLeho-unsplash.jpg"
             alt="Library"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-indigo-600"></div>
         </div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex  items-center">
@@ -119,7 +118,7 @@ const HomePage = () => {
               initial={{ y: -100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4 font-handwritten"
+              className="text-4xl sm:text-5xl md:text-6xl font-bold text-indigo-600 mb-4 font-handwritten"
             >
               Discover Books
             </motion.h1>
@@ -129,7 +128,7 @@ const HomePage = () => {
               transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
               className="inline-block"
             >
-              <h2 className="text-2xl sm:text-3xl px-5 md:text-4xl font-bold text-white mb-2 font-handwritten">
+              <h2 className="text-2xl sm:text-3xl px-5 md:text-4xl font-bold text-indigo-600 mb-2 font-handwritten">
                 Tailored
               </h2>
             </motion.div>
@@ -139,7 +138,7 @@ const HomePage = () => {
               transition={{ duration: 0.8, delay: 0.6, ease: "easeOut" }}
               className="inline-block"
             >
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white font-handwritten">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-indigo-600 font-handwritten">
                 Just for you
               </h2>
             </motion.div>
@@ -147,7 +146,7 @@ const HomePage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 1, delay: 0.9 }}
-              className="mt-6 text-lg text-white max-w-2xl mx-auto font-handwritten"
+              className="mt-6 text-lg text-indigo-600 max-w-2xl mx-auto font-handwritten"
             >
               Find your next favorite book with personalized recommendations based on your reading preferences.
             </motion.p>
@@ -159,7 +158,7 @@ const HomePage = () => {
             >
               <Link
                 to="/login"
-                className="inline-block bg-white text-indigo-600 px-6 py-3 rounded-lg text-lg font-medium hover:bg-indigo-50 transition-colors font-handwritten"
+                className="inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg text-lg font-medium hover:bg-indigo-50 transition-colors font-handwritten"
               >
                 Get Started
               </Link>
@@ -263,7 +262,7 @@ const HomePage = () => {
               {/* Placeholder for illustration */}
               <div className="relative h-96">
               <img
-                src="https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80"
+                src="/images/gulfer-ergin-LUGuCtvlk1Q-unsplash.jpg"
                 alt="Reading Experience"
                 className="w-full h-full object-cover rounded-lg"
               />

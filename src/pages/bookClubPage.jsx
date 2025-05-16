@@ -75,9 +75,7 @@ const BookClubsPage = () => {
       });
       setJoinedClubs(response.data.clubs);
     } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Failed to fetch joined clubs"
-      );
+      console.log(err);
     }
   };
 

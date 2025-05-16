@@ -595,7 +595,7 @@ const BookDetailPage = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <p className="text-sm font-medium text-gray-700 font-handwritten">
-                            {review.user.name}
+                            {review.user?.name}
                           </p>
                           <span className="text-xs text-gray-500 font-handwritten">
                             •
