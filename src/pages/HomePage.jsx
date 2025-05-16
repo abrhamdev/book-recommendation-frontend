@@ -24,7 +24,7 @@ const HomePage = () => {
     const fetchTrendingBooks = async () => {
       try {
         const response = await axios.post(`${API_URL}/books/trending`, {
-          maxResults: 5 // Number of books to fetch
+          maxResults: 5 
         });
         setTrendingBooks(response.data);
       } catch (error) {
