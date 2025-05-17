@@ -5,13 +5,13 @@ import axios from "axios";
 import { API_URL } from "../../API_URL";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDjuzkbSBRZV728rV87fGD4uNBreFiqD80",
-  authDomain: "signinwith-e7000.firebaseapp.com",
-  projectId: "signinwith-e7000",
-  storageBucket: "signinwith-e7000.firebasestorage.app",
-  messagingSenderId: "11657156503",
-  appId: "1:11657156503:web:f4458e53adfe415bf356d2",
-  measurementId: "G-4YDMN1XX9B"
+  apiKey: import.meta.env.VITE_APIKEY,
+  authDomain: import.meta.env.VITE_AUTHDOMAIN,
+  projectId: import.meta.env.VITE_PROJECTID,
+  storageBucket:import.meta.env.VITE_STORAGEBUCKET,
+  messagingSenderId: import.meta.env.VITE_MESSAGINGSENDERID,
+  appId:import.meta.env.APPID,
+  measurementId:import.meta.env.VITE_MEASURMEENTID
 };
 
 const app = initializeApp(firebaseConfig);
