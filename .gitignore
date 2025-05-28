@@ -1,4 +1,4 @@
-# Logs
+
 logs
 *.log
 npm-debug.log*
@@ -6,19 +6,23 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-.env
-node_modules
-dist
-dist-ssr
-*.local
 
-# Editor directories and files
-.vscode/*
+# Env files
+.env*
+!.env.example
+
+# Dependencies
+node_modules/
+
+dist/
+dist-ssr/
+.next/
+out/
+build/
+
+# Editor settings (safe to ignore)
+.vscode/
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
