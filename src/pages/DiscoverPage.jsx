@@ -132,14 +132,6 @@ const DiscoverPage = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="pt-16 pb-8">
         <div className="max-w-5xl mx-auto pl-4 pr-6 lg:pl-8 lg:pr-8">
-          {/* Breadcrumb Navigation */}
-          <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
-            <Link to="/discover" className="hover:underline">Genres</Link>
-            <ChevronRightIcon className="h-4 w-4" />
-            <Link to="/discover?genre=nonfiction" className="hover:underline">Nonfiction</Link>
-            <ChevronRightIcon className="h-4 w-4" />
-            <span className="text-gray-900">Biography</span>
-          </nav>
 
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Main Content */}
