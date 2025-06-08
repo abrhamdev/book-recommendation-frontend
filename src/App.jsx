@@ -58,7 +58,7 @@ function App() {
             } />
             <Route path="/book/:id" element={<BookDetailPage />} />
             <Route path="/search" element={<SearchResultsPage />} />
-            <Route path="/discover" element={<DiscoverPage />} />
+            <Route path="/discover" element={<DiscoverPage />} /> 
             <Route path="/community/bookclub" element={<BookClubsPage />} />
             <Route path="/profile" element={
               <ProtectedRoute>
