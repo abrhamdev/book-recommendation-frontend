@@ -18,6 +18,8 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from './components/PublicRoute';
 import ReadingListPage from "./pages/Dashboard/ReadingList";
+import DiscussionsPage from "./pages/DiscussionsPage";
+import EventsPage from "./pages/EventsPage";
 
 function App() {
   return (
@@ -60,6 +62,8 @@ function App() {
             <Route path="/search" element={<SearchResultsPage />} />
             <Route path="/discover" element={<DiscoverPage />} /> 
             <Route path="/community/bookclub" element={<BookClubsPage />} />
+            <Route path="/community/discussions" element={<DiscussionsPage />} />
+            <Route path="/community/events" element={<EventsPage />} />
             <Route path="/profile" element={
               <ProtectedRoute>
                 <ProfilePage />

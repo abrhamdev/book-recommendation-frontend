@@ -13,6 +13,8 @@ import {
 import axios from "axios";
 import { API_URL, SOCKET_URL } from "../../API_URL";
 import { toast } from "react-toastify";
+import EventsPage from './EventsPage';
+import { Link } from "react-router-dom";
 
 const socket = io(SOCKET_URL, {
   auth: {
@@ -47,8 +49,9 @@ const BookClubsPage = () => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
 
-    // Fetch user's joined clubs
+    // Fetch user's joined clubs and all clubs
     fetchJoinedClubs();
+    fetchBookClubs();
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -56,6 +59,7 @@ const BookClubsPage = () => {
   useEffect(() => {
     if (selectedClub && viewMode === "chat") {
       fetchClubMembers(selectedClub.id);
+      fetchMessages(selectedClub.id);
     }
   }, [selectedClub, viewMode]);
 
@@ -66,63 +70,61 @@ const BookClubsPage = () => {
 
   const fetchJoinedClubs = async () => {
     const token = localStorage?.getItem("NR_token");
+    if (!token) return;
+    
     try {
-      const response = await axios.post(`${API_URL}/community/bookclub/joined`,{}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axios.post(
+        `${API_URL}/community/bookclub/joined`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       setJoinedClubs(response.data.clubs);
     } catch (err) {
-      console.log(err);
+      console.error("Error fetching joined clubs:", err);
+      toast.error("Failed to fetch joined clubs");
     }
   };
 
-  // for feching all clubs for testing
-  useEffect(() => {
-    const fetchBookClubs = async () => {
-      try {
-        const response = await axios.get(
-          `${API_URL}/community/bookclub/fetchclubs`
-        );
-        setAllClubs(response.data.clubs);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    fetchBookClubs();
-  }, []);
-
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const token = localStorage.getItem('NR_token');
-        const response = await axios.post(
-          `${API_URL}/community/bookclub/messages`,{clubId:selectedClub.id},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        setMessages(response.data.messages);
-      } catch (error) {
-        console.error('Failed to fetch messages', error);
-      }
-    };
-
-    if (selectedClub?.id) {
-      fetchMessages();
+  const fetchBookClubs = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/community/bookclub/fetchclubs`);
+      setAllClubs(response.data.clubs);
+    } catch (error) {
+      console.error("Error fetching book clubs:", error);
+      toast.error("Failed to fetch book clubs");
     }
-  }, [selectedClub?.id]);
+  };
+
+  const fetchMessages = async (clubId) => {
+    try {
+      const token = localStorage.getItem('NR_token');
+      const response = await axios.post(
+        `${API_URL}/community/bookclub/messages`,
+        { clubId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setMessages(response.data.messages);
+    } catch (error) {
+      console.error('Failed to fetch messages:', error);
+      toast.error("Failed to fetch messages");
+    }
+  };
 
   const fetchClubMembers = async (clubId) => {
     try {
       const token = localStorage?.getItem("NR_token");
       const response = await axios.post(
-        `${API_URL}/community/bookclub/members`,{clubId},
+        `${API_URL}/community/bookclub/members`,
+        { clubId },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -131,13 +133,19 @@ const BookClubsPage = () => {
       );
       setMembers(response.data.members);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to fetch members");
+      console.error("Error fetching club members:", err);
+      toast.error("Failed to fetch club members");
     }
   };
 
   const handleCreateBookClub = async (e) => {
     e.preventDefault();
     const token = localStorage?.getItem("NR_token");
+    if (!token) {
+      toast.error("Please login to create a book club");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -153,59 +161,47 @@ const BookClubsPage = () => {
 
       const response = await axios.post(
         `${API_URL}/community/bookclub/create`,
-        formData,
+        formDataToSend,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            // 'Content-Type': 'multipart/form-data',
+            'Content-Type': 'multipart/form-data',
           },
         }
       );
 
       toast.success(response.data.message);
       setIsModalOpen(false);
-      /*setFormData({
+      setFormData({
         name: '',
         description: '',
         coverImage: null,
         visibility: 'public',
         genreFocus: ''
-      });*/
+      });
+      
+      // Refresh the clubs list
+      fetchBookClubs();
+      fetchJoinedClubs();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Something went wrong");
+      console.error("Error creating book club:", err);
+      toast.error(err.response?.data?.message || "Failed to create book club");
     } finally {
       setLoading(false);
     }
   };
 
-  
-  useEffect(() => {
-    socket.emit('join_room', selectedClub?.id);
-
-    socket.on('receive_message', (msg) => {
-      console.log(msg);
-      setMessages((prev) => [...prev, msg]);
-    });
-
-    return () => {
-      socket.off('receive_message');
-    };
-  }, [selectedClub?.id]);
-
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    const clubId=selectedClub.id;
-    if (newMessage.trim() === '') return;
-    socket.emit('send_message', { clubId, message: newMessage });
-    setNewMessage('');
-  };
-
   const handleJoinClub = async (clubId) => {
+    const token = localStorage?.getItem("NR_token");
+    if (!token) {
+      toast.error("Please login to join a book club");
+      return;
+    }
+
     try {
-      const token = localStorage?.getItem("NR_token");
       const response = await axios.post(
         `${API_URL}/community/bookclub/join`,
-        {clubId},
+        { clubId },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -215,18 +211,52 @@ const BookClubsPage = () => {
 
       toast.success(response.data.message);
       fetchJoinedClubs(); // Refresh the joined clubs list
+      fetchBookClubs(); // Refresh all clubs list
     } catch (err) {
+      console.error("Error joining club:", err);
       toast.error(err.response?.data?.message || "Failed to join club");
     }
   };
 
- 
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!selectedClub?.id) return;
+    if (newMessage.trim() === '') return;
 
+    const token = localStorage.getItem('NR_token');
+    if (!token) {
+      toast.error("Please login to send messages");
+      return;
+    }
+
+    socket.emit('send_message', { 
+      clubId: selectedClub.id, 
+      message: newMessage,
+      token 
+    });
+    setNewMessage('');
+  };
+
+  // Socket connection and message handling
+  useEffect(() => {
+    if (selectedClub?.id) {
+      socket.emit('join_room', selectedClub.id);
+
+      socket.on('receive_message', (msg) => {
+        setMessages((prev) => [...prev, msg]);
+      });
+
+      return () => {
+        socket.off('receive_message');
+      };
+    }
+  }, [selectedClub?.id]);
 
   const filteredClubs = allClubs.filter(
     (club) =>
       club.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      club.currentBook?.title.toLowerCase().includes(searchQuery.toLowerCase())
+      club.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      club.genreFocus?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const isDesktop = windowWidth >= 1024;
@@ -255,755 +285,230 @@ const BookClubsPage = () => {
                     Book Clubs
                   </button>
 
-                  <button
-                    onClick={() => {
-                      setActiveTab("discussions");
-                      setViewMode("list");
-                    }}
+                  <Link
+                    to="/community/discussions"
                     className={`flex items-center w-full p-2 rounded-md ${
-                      activeTab === "discussions"
+                      window.location.pathname === "/community/discussions"
                         ? "bg-indigo-50 text-indigo-600"
                         : "text-gray-700 hover:bg-gray-100"
                     }`}
                   >
                     <ChatBubbleLeftIcon className="h-5 w-5 mr-2" />
                     Discussions
-                  </button>
+                  </Link>
 
-                  <button
-                    onClick={() => {
-                      setActiveTab("events");
-                      setViewMode("list");
-                    }}
+                  <Link
+                    to="/community/events"
                     className={`flex items-center w-full p-2 rounded-md ${
-                      activeTab === "events"
+                      window.location.pathname === "/community/events"
                         ? "bg-indigo-50 text-indigo-600"
                         : "text-gray-700 hover:bg-gray-100"
                     }`}
                   >
                     <CalendarIcon className="h-5 w-5 mr-2" />
                     Events
-                  </button>
+                  </Link>
                 </nav>
               </div>
 
-              <div className="w-full bg-white border lg:sticky lg:top-65  border-gray-200 p-4 mt-6">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                  Your Clubs
-                </h3>
-                <div className="space-y-1">
-                  {joinedClubs.length > 0 ? (
-                    joinedClubs.map((club) => (
-                      <button
-                        key={club.id}
-                        onClick={() => {
-                          setSelectedClub(club);
-                          setViewMode("chat");
-                        }}
-                        className={`flex items-center w-full p-2 rounded-md text-left ${
-                          selectedClub?.id === club.id && viewMode === "chat"
-                            ? "bg-indigo-50 text-indigo-600"
-                            : "text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        <div className="flex-shrink-0 h-4 w-4 mr-2">
-                        <img
-                                    src={club.currentBook?.coverImage}
-                                    alt={club.currentBook?.title}
-                                    className="w-16 aspect-[2/3] object-cover rounded"
-                                  />
-                        </div>
-                        <span className="truncate">{club.name}</span>
-                      </button>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500 p-2">
-                      You haven't joined any clubs yet
-                    </p>
-                  )}
+              {/* Your Clubs Section */}
+              <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <h3 className="text-sm font-medium text-gray-900 mb-3">Your Clubs</h3>
+                <div className="space-y-2">
+                  {joinedClubs.map((club) => (
+                    <button
+                      key={club.id}
+                      onClick={() => {
+                        setSelectedClub(club);
+                        setViewMode("chat");
+                      }}
+                      className={`w-full text-left p-2 rounded-md text-sm ${
+                        selectedClub?.id === club.id
+                          ? "bg-indigo-50 text-indigo-600"
+                          : "text-gray-700 hover:bg-gray-100"
+                      }`}
+                    >
+                      {club.name}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* Main Content Area */}
+            {/* Main Content */}
             <div className="flex-1">
-              {/* Search Bar and Add Button */}
-              <div className="flex gap-4 mb-6">
-                <div className="relative flex-1">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+              {activeTab === "bookClubs" && (
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">Book Clubs</h2>
+                    <button
+                      onClick={() => setIsModalOpen(true)}
+                      className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors flex items-center gap-2"
+                    >
+                      <PlusIcon className="h-5 w-5" />
+                      Create Club
+                    </button>
                   </div>
-                  <input
-                    type="text"
-                    placeholder="Search book clubs..."
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  <PlusIcon className="h-5 w-5" />
-                  Add
-                </button>
-              </div>
 
-              {/* Content Layout */}
-              {isDesktop ? (
-                <div className="flex gap-6">
-                  {/* Middle Section - Clubs List or Chat */}
-                  <div className="flex-1 max-w-[600px]">
-                    {viewMode === "list" ? (
-                      <div className="space-y-4">
-                        {filteredClubs.map((club,index) => (
-                          <div
-                            key={`${club.id}-${index}`}
-                            className={`bg-white p-4 rounded-lg border ${
-                              selectedClub?.id === club.id
-                                ? "border-indigo-500"
-                                : "border-gray-200"
-                            } cursor-pointer hover:shadow-md transition-shadow`}
-                            onClick={() => setSelectedClub(club)}
-                          >
-                            <div className="flex items-start gap-4">
-                              <div className="flex-shrink-0">
-                                <div className="relative">
-                                  <img
-                                    src={club.currentBook?.coverImage}
-                                    alt={club.currentBook?.title}
-                                    className="w-16 aspect-[2/3] object-cover rounded"
-                                  />
-                                  <div className="absolute -bottom-1 -right-1 bg-indigo-500 text-white rounded-full p-1">
-                                    <UserGroupIcon className="h-3 w-3" />
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="min-w-0">
-                                <h3 className="text-lg font-medium text-gray-900 mb-1">
-                                  {club.name}
-                                </h3>
-                                <p className="text-sm text-gray-600 mb-2">
-                                  Currently reading:{" "}
-                                  <span className="text-indigo-600">
-                                    {club.currentBook?.title}
-                                  </span>{" "}
-                                  by {club.currentBook?.author}
-                                </p>
-                                <div className="flex items-center gap-4 text-xs text-gray-500">
-                                  <span>{club.member_count} members</span>
-                                  <span>•</span>
-                                  <span>{club.discussions} discussions</span>
-                                  <span>•</span>
-                                  <span>Next: {club.nextMeeting}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      /* Chat Room */
-                      <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
-                      {/* Chat Header */}
-                      <div className="py-1 px-4 border-b border-gray-200">
-                        <h3 className="text-lg font-medium text-gray-900">
-                          {selectedClub?.name}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          Currently reading: {selectedClub?.currentBook?.title}
-                        </p>
-                      </div>
-                
-                      {/* Messages Area */}
-                      <div className="flex-1 p-4 min-h-80 overflow-y-auto  max-h-[430px]">
-                        {messages.length > 0 ? (
-                          <div className="space-y-4">
-                            {messages.map((message, index) => (
-                              <div key={index} className="flex items-start  gap-3">
-                                <div className="flex-shrink-0 h-5 w-5 rounded-full bg-indigo-100 flex items-center justify-center">
-                                <img
-                                    className="h-5 w-5 rounded-full"
-                                    src={message.user?.profile_picture || `https://ui-avatars.com/api/?name=${message.user?.name}&background=random`}
-                                    alt={message.user?.name}
-                                  />
-                                </div>
-                                <div className=''>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs font-medium text-gray-900">
-                                      {message.user?.name} {/* Here you'd typically display the sender's name */}
-                                    </span>
-                                    <span className="text-xs text-gray-500">
-                                      {new Date(message?.timestamp).toLocaleTimeString([], {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                      })}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm text-gray-700 mt-1 p-4 border border-gray-200 bg-blue-300 rounded-lg">{message.message}</p>
-                                </div>
-                              </div>
-                            ))}
-                            <div ref={messagesEndRef} />
-                          </div>
-                        ) : (
-                          <div className="h-full flex items-center justify-center text-gray-500">
-                            No messages yet. Start the conversation!
-                          </div>
-                        )}
-                      </div>
-                
-                      {/* Message Input */}
-                      <form
-                        onSubmit={handleSendMessage}
-                        className="p-2 border-t border-gray-200"
-                      >
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            placeholder="Type your message..."
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                          />
-                          <button
-                            type="submit"
-                            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                          >
-                            Send
-                          </button>
-                        </div>
-                      </form>
+                  {/* Search Bar */}
+                  <div className="mb-6">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search clubs..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                      <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-2.5" />
                     </div>
-                    )}
                   </div>
 
-                  {/* Right Panel - Club Details or Members List */}
-                  <div className="w-80 flex-shrink-0">
-                    {viewMode === "list" ? (
-                      selectedClub ? (
-                        <div className="bg-white p-4 rounded-lg border border-gray-200 sticky top-15">
-                          <h3 className="text-xl font-bold text-gray-900 mb-2">
-                            {selectedClub.name}
-                          </h3>
-
-                          <div className="flex items-center gap-2 mb-4">
-                            <span className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
-                              Active
-                            </span>
-                            <span className="text-sm text-gray-600">
-                              {selectedClub.member_count} members
-                            </span>
-                          </div>
-
-                          <div className="mb-4">
-                            <h4 className="font-medium text-gray-900 mb-1">
-                              Currently Reading
-                            </h4>
-                            <div className="flex items-center gap-3">
-                              <img
-                                src={selectedClub.currentBook?.coverImage}
-                                alt={selectedClub.currentBook?.title}
-                                className="w-12 aspect-[2/3] object-cover rounded"
-                              />
-                              <div>
-                                <p className="text-sm font-medium">
-                                  {selectedClub.currentBook?.title}
-                                </p>
-                                <p className="text-xs text-gray-600">
-                                  {selectedClub.currentBook?.author}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="mb-4">
-                            <h4 className="font-medium text-gray-900 mb-1">
-                              Next Meeting
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              {selectedClub.nextMeeting}
-                            </p>
-                          </div>
-
-                          <div className="mb-4">
-                            <h4 className="font-medium text-gray-900 mb-1">
-                              About This Club
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              {selectedClub.description}
-                            </p>
-                          </div>
-
-                          <div className="space-y-3">
-                            <button
-                              onClick={() => handleJoinClub(selectedClub.id)}
-                              className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors text-sm font-medium"
-                              disabled={joinedClubs.some((c) => c.id === selectedClub.id)}
-                            >
-                              {joinedClubs.some((c) => c.id === selectedClub.id)
-                                ? "Joined"
-                                : "Join Club"}
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (
-                                  joinedClubs.some(
-                                    (c) => c.id === selectedClub.id
-                                  )
-                                ) {
-                                  setViewMode("chat");
-                                }
-                              }}
-                              className="w-full border border-indigo-600 text-indigo-600 py-2 px-4 rounded-md hover:bg-indigo-50 transition-colors text-sm font-medium"
-                              disabled={
-                                !joinedClubs.some(
-                                  (c) => c.id === selectedClub.id
-                                )
-                              }
-                            >
-                              Open Chat
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="bg-white p-4 rounded-lg border lg:sticky lg:top-17 border-gray-200 text-center">
-                          <div className="text-gray-400 mb-2">
-                            <UserGroupIcon className="h-10 w-10 mx-auto" />
-                          </div>
-                          <p className="text-gray-600">
-                            Select a book club to view details
-                          </p>
-                        </div>
-                      )
-                    ) : (
-                      /* Members List */
-                      <div className="bg-white p-4 rounded-lg border border-gray-200 sticky top-17">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                          <UsersIcon className="h-5 w-5 text-gray-500" />
-                          Members ({members.length})
-                        </h3>
-
-                        <div className="space-y-3">
-                          {members.length > 0 ? (
-                            members.map((member) => (
-                              <div
-                                key={member.id}
-                                className="flex items-center gap-3"
-                              >
-                                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                                  <img
-                                    className="h-8 w-8 rounded-full"
-                                    src={member.profile_picture || `https://ui-avatars.com/api/?name=${member.name}&background=random`}
-                                    alt={member.name}
-                                  />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900">
-                                    {member.name}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {member.role}
-                                  </p>
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <p className="text-sm text-gray-500">
-                              No members found
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                /* Mobile Layout */
-                <div className="space-y-6">
-                  {/* Clubs List (Mobile) */}
-                  <div className="space-y-4">
-                    {filteredClubs.map((club,index) => (
+                  {/* Clubs Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredClubs.map((club) => (
                       <div
-                        key={`${club.id}-${index}`}
-                        className={`bg-white p-4 rounded-lg border ${
-                          selectedClub?.id === club.id
-                            ? "border-indigo-500"
-                            : "border-gray-200"
-                        } cursor-pointer hover:shadow-md transition-shadow`}
-                        onClick={() => setSelectedClub(club)}
+                        key={club.id}
+                        className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                       >
-                        <div className="flex items-start gap-4">
-                          <div className="flex-shrink-0">
-                            <div className="relative">
-                              <img
-                                src={null}
-                                alt=""
-                                className="w-16 aspect-[2/3] object-cover rounded"
-                              />
-                              <div className="absolute -bottom-1 -right-1 bg-indigo-500 text-white rounded-full p-1">
-                                <UserGroupIcon className="h-3 w-3" />
-                              </div>
-                            </div>
-                          </div>
-                          <div className="min-w-0">
-                            <h3 className="text-lg font-medium text-gray-900 mb-1">
-                              {club.name}
-                            </h3>
-                            <p className="text-sm text-gray-600 mb-2">
-                              Currently reading:{" "}
-                              <span className="text-indigo-600">
-                                {club.currentBook?.title}
-                              </span>{" "}
-                              by {club.currentBook?.author}
-                            </p>
-                            <div className="flex items-center gap-4 text-xs text-gray-500">
-                              <span>{club.members} members</span>
-                              <span>•</span>
-                              <span>{club.discussions} discussions</span>
-                              <span>•</span>
-                              <span>Next: {club.nextMeeting}</span>
-                            </div>
-                          </div>
-                          <div className="ml-auto">
-                            {selectedClub?.id === club.id ? (
-                              <ChevronUpIcon className="h-5 w-5 text-gray-400" />
-                            ) : (
-                              <ChevronDownIcon className="h-5 w-5 text-gray-400" />
-                            )}
+                        <div className="aspect-w-16 aspect-h-9 bg-gray-200">
+                          <img
+                            src={club.coverImage || "/default-club-cover.jpg"}
+                            alt={club.name}
+                            className="object-cover w-full h-48"
+                          />
+                        </div>
+                        <div className="p-4">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            {club.name}
+                          </h3>
+                          <p className="text-gray-600 text-sm mb-4">
+                            {club.description}
+                          </p>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-500">
+                              {club.members?.length || 0} members
+                            </span>
+                            <button
+                              onClick={() => handleJoinClub(club.id)}
+                              className="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-md hover:bg-indigo-100 transition-colors"
+                            >
+                              Join Club
+                            </button>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
-
-                  {/* Club Details or Chat (Mobile - appears below when selected) */}
-                  {selectedClub && viewMode === "list" && (
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">
-                        {selectedClub.name}
-                      </h3>
-
-                      <div className="flex items-center gap-2 mb-4">
-                        <span className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
-                          Active
-                        </span>
-                        <span className="text-sm text-gray-600">
-                          {selectedClub.members} members
-                        </span>
-                      </div>
-
-                      <div className="mb-4">
-                        <h4 className="font-medium text-gray-900 mb-1">
-                          Currently Reading
-                        </h4>
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={selectedClub.currentBook?.coverImage}
-                            alt={selectedClub.currentBook?.title}
-                            className="w-12 aspect-[2/3] object-cover rounded"
-                          />
-                          <div>
-                            <p className="text-sm font-medium">
-                              {selectedClub.currentBook?.title}
-                            </p>
-                            <p className="text-xs text-gray-600">
-                              {selectedClub.currentBook?.author}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mb-4">
-                        <h4 className="font-medium text-gray-900 mb-1">
-                          Next Meeting
-                        </h4>
-                        <p className="text-sm text-gray-600">
-                          {selectedClub.nextMeeting}
-                        </p>
-                      </div>
-
-                      <div className="mb-4">
-                        <h4 className="font-medium text-gray-900 mb-1">
-                          About This Club
-                        </h4>
-                        <p className="text-sm text-gray-600">
-                          {selectedClub.description}
-                        </p>
-                      </div>
-
-                      <div className="space-y-3">
-                        <button
-                          onClick={() => handleJoinClub(selectedClub.id)}
-                          className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors text-sm font-medium"
-                        >
-                          {joinedClubs.some((c) => c.id === selectedClub.id)
-                            ? "Joined"
-                            : "Join Club"}
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (
-                              joinedClubs.some((c) => c.id === selectedClub.id)
-                            ) {
-                              setViewMode("chat");
-                            }
-                          }}
-                          className="w-full border border-indigo-600 text-indigo-600 py-2 px-4 rounded-md hover:bg-indigo-50 transition-colors text-sm font-medium"
-                          disabled={
-                            !joinedClubs.some((c) => c.id === selectedClub.id)
-                          }
-                        >
-                          Open Chat
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Chat Room (Mobile) */}
-                  {selectedClub && viewMode === "chat" && (
-                    <div className="bg-white rounded-lg border border-gray-200">
-                      {/* Chat Header */}
-                      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                        <button
-                          onClick={() => setViewMode("list")}
-                          className="text-indigo-600"
-                        >
-                          Back
-                        </button>
-                        <div className="text-center">
-                          <h3 className="text-lg font-medium text-gray-900">
-                            {selectedClub.name}
-                          </h3>
-                          <p className="text-xs text-gray-500">
-                            {members.length} members online
-                          </p>
-                        </div>
-                        <div className="w-8"></div> {/* Spacer for alignment */}
-                      </div>
-
-                      {/* Messages Area */}
-                      <div className="p-4 h-64 overflow-y-auto">
-                        {messages.length > 0 ? (
-                          <div className="space-y-4">
-                            {messages.map((message, index) => (
-                              <div
-                                key={index}
-                                className="flex items-start gap-3"
-                              >
-                                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                                  <span className="text-xs font-medium text-indigo-600">
-                                    {message.user.name.charAt(0).toUpperCase()}
-                                  </span>
-                                </div>
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium text-gray-900">
-                                      {message.user.name}
-                                    </span>
-                                    <span className="text-xs text-gray-500">
-                                      {new Date(
-                                        message.created_at
-                                      ).toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                      })}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm text-gray-700 mt-1">
-                                    {message.content}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                            <div ref={messagesEndRef} />
-                          </div>
-                        ) : (
-                          <div className="h-full flex items-center justify-center text-gray-500">
-                            No messages yet. Start the conversation!
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Message Input */}
-                      <form
-                        onSubmit={handleSendMessage}
-                        className="p-4 border-t border-gray-200"
-                      >
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            placeholder="Type your message..."
-                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                          />
-                          <button
-                            type="submit"
-                            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                          >
-                            Send
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  )}
                 </div>
               )}
+
+              {activeTab === "discussions" && (
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-6">Discussions</h2>
+                  <p className="text-gray-500">Discussions feature coming soon!</p>
+                </div>
+              )}
+
+              {activeTab === "events" && <EventsPage />}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Add Book Club Modal */}
+      {/* Create Club Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-[120] p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden border border-gray-300">
-            {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Create Book Club
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Start your own reading community
-              </p>
-            </div>
-
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Create Book Club</h2>
             <form onSubmit={handleCreateBookClub}>
-              <div className="p-6 grid grid-cols-2 gap-x-5 space-y-4">
-                {/* Name Input */}
+              <div className="space-y-4">
                 <div>
-                  <label
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                    htmlFor="name"
-                  >
-                    Name <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Club Name
                   </label>
                   <input
                     type="text"
-                    id="name"
-                    required
-                    maxLength={100}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    required
                   />
                 </div>
-
-                {/* Description Input */}
                 <div>
-                  <label
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                    htmlFor="description"
-                  >
-                    Description <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description
                   </label>
                   <textarea
-                    id="description"
-                    required
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     value={formData.description}
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })
                     }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    rows="3"
+                    required
                   />
                 </div>
-
-                {/* Cover Image Input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Cover Image
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current.click()}
-                      className="px-3 py-1.5 text-sm bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    >
-                      Choose File
-                    </button>
-                    <span className="text-sm text-gray-500 truncate flex-1">
-                      {formData.coverImage
-                        ? formData.coverImage.name
-                        : "No file chosen"}
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      ref={fileInputRef}
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                          setFormData({ ...formData, coverImage: file });
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Visibility Input */}
-                <div>
-                  <label
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                    htmlFor="visibility"
-                  >
-                    Visibility
-                  </label>
-                  <select
-                    id="visibility"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    value={formData.visibility}
-                    onChange={(e) =>
-                      setFormData({ ...formData, visibility: e.target.value })
-                    }
-                  >
-                    <option value="public">Public (Anyone can join)</option>
-                    <option value="private">Private (invited only)</option>
-                  </select>
-                </div>
-
-                {/* Genre Focus Input */}
-                <div>
-                  <label
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                    htmlFor="genreFocus"
-                  >
-                    Genre Focus <span className="text-red-500">*</span>
+                    Genre Focus
                   </label>
                   <input
                     type="text"
-                    id="genreFocus"
-                    required
-                    maxLength={100}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     value={formData.genreFocus}
                     onChange={(e) =>
                       setFormData({ ...formData, genreFocus: e.target.value })
                     }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Visibility
+                  </label>
+                  <select
+                    value={formData.visibility}
+                    onChange={(e) =>
+                      setFormData({ ...formData, visibility: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="public">Public</option>
+                    <option value="private">Private</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Cover Image
+                  </label>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={(e) =>
+                      setFormData({ ...formData, coverImage: e.target.files[0] })
+                    }
+                    className="w-full"
+                    accept="image/*"
                   />
                 </div>
               </div>
-
-              {/* Modal Footer */}
-              <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+              <div className="mt-6 flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50"
                 >
-                  {loading ? "Creating..." : "Create Book Club"}
+                  {loading ? "Creating..." : "Create Club"}
                 </button>
               </div>
             </form>
