@@ -268,21 +268,6 @@ const DiscoverPage = () => {
               </div>
             </div>
             <div className="lg:w-56">
-              <div className="bg-white p-3 rounded mb-4">
-                <h2 className="font-bold text-gray-900 mb-2 text-sm">RELATED GENRES</h2>
-                <ul className="space-y-1">
-                  {relatedGenres.map(genre => (
-                    <li key={genre.name}>
-                      <Link
-                        to={genre.path}
-                        className="text-indigo-600 hover:underline text-sm"
-                      >
-                        {genre.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
               <div className="bg-white p-3 rounded">
                 <h2 className="font-bold text-gray-900 mb-2 text-sm">RELATED NEWS</h2>
                 <Link to={relatedNews.link} className="block group">
