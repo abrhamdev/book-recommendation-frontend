@@ -1,4 +1,4 @@
-import { useState,useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { API_URL } from '../../API_URL';
 import axios from 'axios';
@@ -13,14 +13,10 @@ import {
   ListBulletIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
-import Navbar from '../components/Navbar';
-import { Import } from 'lucide-react';
-import DashboardSidebar from '../components/DashboardSidebar';
 
 const SearchResultsPage = () => {
   const location = useLocation();
   const searchQuery = new URLSearchParams(location.search).get('q') || '';
-
   //state for pagination
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -43,37 +39,57 @@ const SearchResultsPage = () => {
   const [selectedAuthor, setSelectedAuthor] = useState('');
   const [yearRange, setYearRange] = useState({ min: '', max: '' });
   const [minRating, setMinRating] = useState(0);
-  const [loading,setLoading]=useState(false);
-  const [searchResults,setSearchResults]=useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [rawTotal, setRawTotal] = useState(0);
 
   useEffect(() => {
-    if (searchInput.trim() === '') {
-      setSearchResults([]);
-      setPagination(prev => ({ ...prev, totalItems: 0 }));
-      return;
+  if (searchInput.trim() === '') {
+    setSearchResults([]);
+    setPagination(prev => ({ ...prev, totalItems: 0 }));
+    return;
+  }
+
+  const timeoutId = setTimeout(async () => {
+    setLoading(true);
+    try {
+       
+      const startIndex = (pagination.currentPage - 1) * pagination.itemsPerPage;
+      
+      
+      const languageMapping = { English: 'en', Spanish: 'es', French: 'fr', German: 'de', Japanese: 'ja' };
+      const ageMapping = { Children: 'Juvenile', 'Young Adult': 'Young Adult', Adult: 'Adult' };
+      const apiLanguage = selectedLanguage ? languageMapping[selectedLanguage] || '' : '';
+      const apiAgeGroup = selectedAgeGroup ? ageMapping[selectedAgeGroup] || '' : '';
+
+      const response = await axios.get(
+        `${API_URL}/books/search?q=${encodeURIComponent(searchInput)}&startIndex=${startIndex}&maxResults=${pagination.itemsPerPage}&genre=${selectedGenres[0] || ''}&language=${apiLanguage}&ageGroup=${apiAgeGroup}&bookLength=${bookLength}&minYear=${yearRange.min}&maxYear=${yearRange.max}&minRating=${minRating}`
+      );
+      setSearchResults(response.data.items || []);
+      setPagination(prev => ({
+        ...prev,
+        totalItems: response.data.totalItems
+      }));
+     setRawTotal(response.data.rawTotal || response.data.totalItems);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
-  
-    const timeoutId = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const startIndex = (pagination.currentPage - 1) * pagination.itemsPerPage;
-        const response = await axios.get(
-          `${API_URL}/books/search?q=${searchInput}&startIndex=${startIndex}&maxResults=${pagination.itemsPerPage}`
-        );
-        setSearchResults(response.data.items || []);
-        setPagination(prev => ({
-          ...prev,
-          totalItems: response.data.totalItems || 0
-        }));
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    }, 500);
-  
-    return () => clearTimeout(timeoutId);
-  }, [searchInput, pagination.currentPage]);
+  }, 500);
+
+  return () => clearTimeout(timeoutId);
+}, [
+  searchInput, 
+  pagination.currentPage, 
+  selectedGenres, 
+  selectedLanguage, 
+  selectedAgeGroup, 
+  bookLength, 
+  yearRange.min, 
+  yearRange.max, 
+  minRating
+]);
 
 
 
@@ -88,7 +104,23 @@ const SearchResultsPage = () => {
   };
 
   const handleFilterChange = (filter, value) => {
-    // Implement filter logic
+    switch (filter) {
+      case 'genre':
+        setSelectedGenres(prev => prev.length && prev[0] === value ? [] : [value]); 
+        break;
+      case 'language':
+        setSelectedLanguage(prev => prev === value ? '' : value); 
+        break;
+      case 'ageGroup':
+        setSelectedAgeGroup(prev => prev === value ? '' : value); 
+        break;
+      case 'length':
+        setBookLength(prev => prev === value ? '' : value); 
+        break;
+      case 'rating':
+        setMinRating(prev => prev === value ? 0 : value);
+        break;
+    }
   };
 
   const handleSortChange = (e) => {
@@ -253,7 +285,7 @@ const SearchResultsPage = () => {
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-3">
                 <h2 className="text-lg font-semibold text-gray-800">Search Results</h2>
-                <span className="text-gray-500 text-sm">({pagination.totalItems>200?'>200':pagination.totalItems} books found)</span>
+                <span className="text-gray-500 text-sm">({rawTotal > 200?'>200' : pagination.totalItems} books found)</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5">
@@ -288,9 +320,9 @@ const SearchResultsPage = () => {
 
             {/* Results Grid/List */}
             <div className={`${viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4' : 'space-y-3 overflow-y-scroll max-h-screen'}`}>
-              {!loading ? searchResults.length > 0 ? searchResults.map((book,index) => (
+              {!loading ? searchResults.length > 0 ? searchResults.map((book, index) => (
                 <div
-                key={`${book.id}-${index}`}
+                  key={`${book.id}-${index}`}
                   className={`bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow ${
                     viewMode === 'list' ? 'flex' : ''
                   }`}
@@ -305,19 +337,18 @@ const SearchResultsPage = () => {
                       <h3 className="font-semibold text-base text-gray-800 mb-1">{book.volumeInfo.title}</h3>
                       <p className="text-gray-600 text-sm mb-1.5">{book.volumeInfo.authors}</p>
                       <div className="flex flex-wrap gap-1.5 mb-1.5">
-                        
-                          <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
-                            {book.volumeInfo.categories}
-                          </span>
+                        <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                          {book.volumeInfo.categories}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
                           {book.volumeInfo.averageRating ? 
                             <>
-                          <StarIconSolid className="h-4 w-4 text-yellow-400" />
-                          <span className="ml-1 text-gray-600 text-sm">{book.volumeInfo.averageRating}</span>
-                          </>: <span className="ml-1 text-gray-600 text-sm">N/A</span>
-                      }
+                              <StarIconSolid className="h-4 w-4 text-yellow-400" />
+                              <span className="ml-1 text-gray-600 text-sm">{book.volumeInfo.averageRating}</span>
+                            </> : <span className="ml-1 text-gray-600 text-sm">N/A</span>
+                          }
                         </div>
                         <span className="text-gray-500 text-sm">{book.volumeInfo.publishedDate}</span>
                       </div>
@@ -327,134 +358,134 @@ const SearchResultsPage = () => {
                     </div>
                   </Link>
                 </div>
-              ) ):<div>No Results Found</div>:<div>Loading...</div> }
+              )) : <div>No Results Found</div> : <div>Loading...</div>}
             </div>
 
             {/* Pagination */}
             <div className="mt-6 flex justify-center">
-  <nav className="flex items-center gap-1.5">
-    {/* Previous Button */}
-    <button
-      onClick={() => setPagination(prev => ({
-        ...prev,
-        currentPage: Math.max(prev.currentPage - 1, 1)
-      }))}
-      disabled={pagination.currentPage === 1}
-      className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 text-sm"
-    >
-      Previous
-    </button>
+              <nav className="flex items-center gap-1.5">
+                {/* Previous Button */}
+                <button
+                  onClick={() => setPagination(prev => ({
+                    ...prev,
+                    currentPage: Math.max(prev.currentPage - 1, 1)
+                  }))}
+                  disabled={pagination.currentPage === 1}
+                  className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 text-sm"
+                >
+                  Previous
+                </button>
 
-    {/* First Page - Only show if not in first 3 pages */}
-    {pagination.currentPage > 3 && (
-      <>
-        <button
-          onClick={() => setPagination(prev => ({ ...prev, currentPage: 1 }))}
-          className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm"
-        >
-          1
-        </button>
-        {pagination.currentPage > 4 && (
-          <span className="px-2 text-gray-500">...</span>
-        )}
-      </>
-    )}
+                {/* First Page - Only show if not in first 3 pages */}
+                {pagination.currentPage > 3 && (
+                  <>
+                    <button
+                      onClick={() => setPagination(prev => ({ ...prev, currentPage: 1 }))}
+                      className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm"
+                    >
+                      1
+                    </button>
+                    {pagination.currentPage > 4 && (
+                      <span className="px-2 text-gray-500">...</span>
+                    )}
+                  </>
+                )}
 
-    {/* Middle Pages - Limited to 20 max */}
-    {Array.from({ 
-      length: Math.min(
-        5, 
-        Math.min(
-          Math.ceil(pagination.totalItems / pagination.itemsPerPage),
-          20 // Hard limit of 20 pages
-        )
-      ) 
-    }, (_, i) => {
-      let pageNum;
-      const totalPages = Math.min(
-        Math.ceil(pagination.totalItems / pagination.itemsPerPage),
-        20
-      );
+                {/* Middle Pages - Limited to 20 max */}
+                {Array.from({ 
+                  length: Math.min(
+                    5, 
+                    Math.min(
+                      Math.ceil(pagination.totalItems / pagination.itemsPerPage),
+                      20 // Hard limit of 20 pages
+                    )
+                  ) 
+                }, (_, i) => {
+                  let pageNum;
+                  const totalPages = Math.min(
+                    Math.ceil(pagination.totalItems / pagination.itemsPerPage),
+                    20
+                  );
 
-      if (totalPages <= 5) {
-        pageNum = i + 1;
-      } else if (pagination.currentPage <= 3) {
-        pageNum = i + 1;
-      } else if (pagination.currentPage >= totalPages - 2) {
-        pageNum = totalPages - 4 + i;
-      } else {
-        pageNum = pagination.currentPage - 2 + i;
-      }
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (pagination.currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (pagination.currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = pagination.currentPage - 2 + i;
+                  }
 
-      return pageNum <= totalPages ? (
-        <button
-          key={pageNum}
-          onClick={() => setPagination(prev => ({ ...prev, currentPage: pageNum }))}
-          className={`px-3 py-1.5 rounded-lg text-sm ${
-            pagination.currentPage === pageNum
-              ? 'bg-indigo-600 text-white'
-              : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          {pageNum}
-        </button>
-      ) : null;
-    })}
+                  return pageNum <= totalPages ? (
+                    <button
+                      key={pageNum}
+                      onClick={() => setPagination(prev => ({ ...prev, currentPage: pageNum }))}
+                      className={`px-3 py-1.5 rounded-lg text-sm ${
+                        pagination.currentPage === pageNum
+                          ? 'bg-indigo-600 text-white'
+                          : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ) : null;
+                })}
 
-    {/* Last Page - Only show if not in last 3 pages */}
-    {pagination.currentPage < Math.min(
-      Math.ceil(pagination.totalItems / pagination.itemsPerPage),
-      20
-    ) - 2 && (
-      <>
-        {pagination.currentPage < Math.min(
-          Math.ceil(pagination.totalItems / pagination.itemsPerPage),
-          20
-        ) - 3 && (
-          <span className="px-2 text-gray-500">...</span>
-        )}
-        <button
-          onClick={() => setPagination(prev => ({
-            ...prev,
-            currentPage: Math.min(
-              Math.ceil(pagination.totalItems / pagination.itemsPerPage),
-              20
-            )
-          }))}
-          className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm"
-        >
-          {Math.min(
-            Math.ceil(pagination.totalItems / pagination.itemsPerPage),
-            20
-          )}
-        </button>
-      </>
-    )}
+                {/* Last Page - Only show if not in last 3 pages */}
+                {pagination.currentPage < Math.min(
+                  Math.ceil(pagination.totalItems / pagination.itemsPerPage),
+                  20
+                ) - 2 && (
+                  <>
+                    {pagination.currentPage < Math.min(
+                      Math.ceil(pagination.totalItems / pagination.itemsPerPage),
+                      20
+                    ) - 3 && (
+                      <span className="px-2 text-gray-500">...</span>
+                    )}
+                    <button
+                      onClick={() => setPagination(prev => ({
+                        ...prev,
+                        currentPage: Math.min(
+                          Math.ceil(pagination.totalItems / pagination.itemsPerPage),
+                          20
+                        )
+                      }))}
+                      className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm"
+                    >
+                      {Math.min(
+                        Math.ceil(pagination.totalItems / pagination.itemsPerPage),
+                        20
+                      )}
+                    </button>
+                  </>
+                )}
 
-    {/* Next Button */}
-    <button
-      onClick={() => setPagination(prev => ({
-        ...prev,
-        currentPage: Math.min(
-          prev.currentPage + 1,
-          Math.min(
-            Math.ceil(pagination.totalItems / pagination.itemsPerPage),
-            20
-          )
-        )
-      }))}
-      disabled={
-        pagination.currentPage === Math.min(
-          Math.ceil(pagination.totalItems / pagination.itemsPerPage),
-          20
-        )
-      }
-      className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 text-sm"
-    >
-      Next
-    </button>
-  </nav>
-</div>
+                {/* Next Button */}
+                <button
+                  onClick={() => setPagination(prev => ({
+                    ...prev,
+                    currentPage: Math.min(
+                      prev.currentPage + 1,
+                      Math.min(
+                        Math.ceil(pagination.totalItems / pagination.itemsPerPage),
+                        20
+                      )
+                    )
+                  }))}
+                  disabled={
+                    pagination.currentPage === Math.min(
+                      Math.ceil(pagination.totalItems / pagination.itemsPerPage),
+                      20
+                    )
+                  }
+                  className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 text-sm"
+                >
+                  Next
+                </button>
+              </nav>
+            </div>
           </div>
         </div>
       </div>
@@ -462,4 +493,4 @@ const SearchResultsPage = () => {
   );
 };
 
-export default SearchResultsPage; 
+export default SearchResultsPage;
