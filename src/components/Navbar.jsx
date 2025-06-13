@@ -192,6 +192,7 @@ const Navbar = () => {
 
           {/* Right Side - Search and Login */}
           <div className="flex items-center space-x-4">
+            {user?.role=="admin"?<Link to='/upload/book' className='text-indigo-600 hover:underline'>Quick Book Add</Link>:null}
             {/* Search Component */}
             <div className="relative flex items-center">
               <motion.button

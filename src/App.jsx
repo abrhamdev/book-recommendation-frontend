@@ -18,6 +18,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from './components/PublicRoute';
 import ReadingListPage from "./pages/Dashboard/ReadingList";
+import BookForm from "./pages/Dashboard/bookForm";
 
 function App() {
   return (
@@ -56,6 +57,13 @@ function App() {
                 <ReadingListPage />
               </ProtectedRoute>
             } />
+            
+            <Route path="/upload/book" element={
+              <ProtectedRoute>
+                <BookForm/>
+              </ProtectedRoute>
+            } />
+            
             <Route path="/book/:id" element={<BookDetailPage />} />
             <Route path="/search" element={<SearchResultsPage />} />
             <Route path="/discover" element={<DiscoverPage />} /> 
