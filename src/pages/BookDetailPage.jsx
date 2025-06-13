@@ -16,6 +16,8 @@ import { toast } from "react-toastify";
 import { FaFacebook, FaFacebookF } from "react-icons/fa";
 import { X } from "lucide-react";
 
+import ReadBook from "../components/ReadBook";
+
 const BookDetailPage = () => {
   const [book, setBook] = useState({});
   const [reviews, setReviews] = useState([]);
@@ -356,15 +358,11 @@ const BookDetailPage = () => {
                 </div>
 
                 {book.description && (
-                  <p className="text-sm text-gray-600 mb-3 sm:mb-4 font-handwritten">
-                    {book.description}
-                  </p>
+                  <p dangerouslySetInnerHTML={{ __html: book.description }} className="text-sm text-gray-600 mb-3 sm:mb-4 font-handwritten"></p>
                 )}
 
                 <div className="flex flex-wrap gap-2">
-                  <button className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors font-medium font-handwritten">
-                    Read Now
-                  </button>
+                <ReadBook book={book} />
                   <button
                     onClick={() => setIsInReadingList(!isInReadingList)}
                     className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200 transition-colors font-medium font-handwritten flex items-center gap-1"
