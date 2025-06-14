@@ -9,7 +9,7 @@ import BookDetailPage from "./pages/BookDetailPage";
 import SearchResultsPage from "./pages/SearchResultsPage";
 import DiscoverPage from "./pages/DiscoverPage";
 import BookClubsPage from "./pages/bookClubPage";
-import ProfilePage from "./pages/Dashboard/profile";
+import SettingsPage from "./pages/Dashboard/settings";
 import FeatureUnderDevelopment from "./pages/errorPages/underDevelopmentPage";
 import UserDashboard from "./pages/Dashboard/dashBoard";
 import Layout from "./pages/layout/layout";
@@ -60,9 +60,9 @@ function App() {
             <Route path="/search" element={<SearchResultsPage />} />
             <Route path="/discover" element={<DiscoverPage />} /> 
             <Route path="/community/bookclub" element={<BookClubsPage />} />
-            <Route path="/profile" element={
+            <Route path="/dashboard/settings" element={
               <ProtectedRoute>
-                <ProfilePage />
+                <SettingsPage />
               </ProtectedRoute>
             } />
             <Route path="/underdevelopment" element={<FeatureUnderDevelopment />} />
