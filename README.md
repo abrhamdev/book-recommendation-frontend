@@ -1,12 +1,65 @@
-# React + Vite
+# NovaReads
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**NovaReads** is a book recommendation system built with a microservices architecture, designed to provide scalable and modular book search and discovery features.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Overview
 
-## Expanding the ESLint configuration
+This project addresses common pain points such as:
+- Difficulty in finding books tailored to individual tastes
+- Lack of engaging book club interactions
+- Absence of personalized recommendations
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+**NovaReads** solves these by offering:
+- Customized reading suggestions  
+- Community engagement through book clubs  
+- Timely notifications  
+
+The platform leverages a microservices approach, ensuring flexibility and maintainability with the following core services:
+- **User Service**
+- **Book Service**
+- **Community Service**
+- **Notification Service**
+- **Recommendation Service**
+- **Admin Panel**
+
+---
+
+## Features
+
+- Secure user registration (including Google OAuth)
+- Book club interaction and discussions
+- Personalized book recommendations
+- Book searching functionality
+- Book discovery by genre
+
+---
+
+## Tech Stack
+
+- **Frontend:** ReactJS, TailwindCSS  
+- **Backend:** NodeJS (JavaScript), FlaskAPI (Python)
+
+---
+
+## Getting Started
+
+1. Fork the repository:
+   ```bash
+   git fork https://github.com/abrhamdev/book-recommendation-frontend.git
+   
+2. Install dependencies for each service.
+3. Configure the required environment variables.
+4. Run all services using your preferred orchestration tool
+
+---
+
+## Contributing
+
+Contributions are welcome!
+To contribute:
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request with your proposed changes
+
