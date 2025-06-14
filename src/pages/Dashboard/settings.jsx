@@ -12,7 +12,10 @@ import {
   KeyIcon,
   BookOpenIcon,
   CogIcon,
-  BellIcon
+  BellIcon,
+  SunIcon, 
+  MoonIcon, 
+  ComputerDesktopIcon
 } from '@heroicons/react/24/outline';
 
 const ProfileSettings = () => {
@@ -234,8 +237,8 @@ const ProfileSettings = () => {
     <>
       <div className="flex-1 p-4 md:p-6 md:pl-20">
         <div className="max-w-4xl pt-8 mx-auto">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Profile Settings</h1>
-
+            <h1 className="text-3xl font-bold text-gray-900 mb-6 mt-3">Settings</h1>
+          
           {/* Tab Navigation */}
           <div className="border-b border-gray-200 mb-6">
             <nav className="flex space-x-8">
@@ -659,24 +662,62 @@ const ProfileSettings = () => {
                     <CogIcon className="h-5 w-5 mr-2 text-gray-500" />
                     Display Preferences
                   </h2>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <label htmlFor="darkMode" className="block text-sm font-medium text-gray-700">
-                        Dark Mode
-                      </label>
-                      <p className="text-sm text-gray-500">
-                        Switch between light and dark theme
-                      </p>
+                  
+                  {/* Theme Selection */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Theme
+                        </label>
+                        <p className="text-sm text-gray-500">
+                          Choose your preferred color scheme
+                        </p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          className={`p-2 rounded-md cursor-pointer ${preferences.theme === 'light' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500'}`}
+                          onClick={() => setPreferences({...preferences, theme: 'light'})}
+                        >
+                          <SunIcon className="h-5 w-5" />
+                        </button>
+                        <button
+                          className={`p-2 rounded-md cursor-pointer ${preferences.theme === 'dark' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500'}`}
+                          onClick={() => setPreferences({...preferences, theme: 'dark'})}
+                        >
+                          <MoonIcon className="h-5 w-5" />
+                        </button>
+                        <button
+                          className={`p-2 rounded-md cursor-pointer ${preferences.theme === 'system' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500'}`}
+                          onClick={() => setPreferences({...preferences, theme: 'system'})}
+                        >
+                          <ComputerDesktopIcon className="h-5 w-5" />
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id="darkMode"
-                        name="darkMode"
-                        checked={preferences.darkMode}
-                        onChange={handlePreferenceChange}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                      />
+
+                    {/* Language Selection */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label htmlFor="language" className="block text-sm font-medium text-gray-700">
+                          Language
+                        </label>
+                        <p className="text-sm text-gray-500">
+                          Choose your preferred language
+                        </p>
+                      </div>
+                      <div>
+                        <select
+                          id="language"
+                          name="language"
+                          value={preferences.language}
+                          onChange={handlePreferenceChange}
+                          className="mt-1 block w-full pl-3 cursor-pointer pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                        >
+                          <option value="en">English</option>
+                          <option value="am">አማርኛ (Amharic)</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>

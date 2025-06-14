@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useState,useEffect } from 'react';
+import { useState,useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MagnifyingGlassIcon, Bars3Icon, XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,7 +17,25 @@ const Navbar = () => {
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileRef = useRef(null);
   
+
+ 
+
+  // Outside click handler
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setIsProfileOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
 
   const handleLogout=()=>{
       localStorage.removeItem('NR_token');
@@ -248,11 +266,11 @@ const Navbar = () => {
             </div>
 
             {user ? (
-              <div className="relative">
+              <div className="relative" ref={profileRef}>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="relative flex"
+                  className="relative flex cursor-pointer"
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                 >
                   <span className="sr-only">View profile</span>
@@ -279,7 +297,7 @@ const Navbar = () => {
                       </div>
                       <div className="py-1">
                         <Link
-                          to="/profile"
+                          to="/dashboard/settings"
                           className="block px-4 py-1 text-xs text-gray-700 hover:bg-gray-100 hover:text-indigo-600"
                         >
                           Profile Settings

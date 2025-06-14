@@ -107,8 +107,8 @@ const DashboardSidebar = () => {
               onClick={() => setIsOpen(false)}
               className="flex items-center gap-4 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
             >
-              <Cog6ToothIcon className="h-5 w-5" />
-              {isOpen && <span>Settings</span>}
+              <Cog6ToothIcon className="h-5 w-5 text-gray-700" />
+              {isOpen && <spa>Settings</spa>}
             </Link>
           </div>
         </div>
