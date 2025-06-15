@@ -8,7 +8,9 @@ import {
   BookmarkIcon as BookmarkIconSolid,
   HandThumbUpIcon as HandThumbUpIconSolid,
   HandThumbDownIcon as HandThumbDownIconSolid,
+  CheckCircleIcon
 } from "@heroicons/react/24/solid";
+
 import { Link, useParams } from "react-router-dom";
 import { API_URL } from "../../API_URL";
 import axios from "axios";
@@ -17,6 +19,7 @@ import { FaFacebook, FaFacebookF } from "react-icons/fa";
 import { X } from "lucide-react";
 
 import ReadBook from "../components/ReadBook";
+import { useAuth } from '../context/AuthContext';
 
 const BookDetailPage = () => {
   const [book, setBook] = useState({});
@@ -35,7 +38,9 @@ const BookDetailPage = () => {
   const [reportReason, setReportReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedReviewId, setSelectedReviewId] = useState(null);
-
+  const { user } = useAuth();
+  const [readingStatus, setReadingStatus] = useState(null);
+  
   const { id } = useParams();
 
   const [reviewFormData, setReviewFormData] = useState({
@@ -119,6 +124,36 @@ const BookDetailPage = () => {
   
     fetchRelatedBooks();
   }, [id,book]);
+
+  useEffect(() => {
+    const checkReadingStatus = async () => {
+      try {
+        const token = localStorage.getItem("NR_token");
+        if (!token || !id) return;
+        
+        const response = await axios.get(`${API_URL}/books/reading-list`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        const allBooks = [
+          ...response.data.currentlyReading,
+          ...response.data.wantToRead,
+          ...response.data.completed
+        ];
+        
+        const bookInList = allBooks.find(b => b.bookId === id);
+        if (bookInList) {
+          setReadingStatus(bookInList.status);
+        }
+      } catch (error) {
+        console.error("Error checking reading list:", error);
+      }
+    };
+    
+    checkReadingStatus();
+  }, [id]);
 
   const handleShare = () => {
     setShowShareOptions(!showShareOptions);
@@ -263,6 +298,65 @@ const BookDetailPage = () => {
     }
   };
 
+  const handleReadingListAction = async (action) => {
+    try {
+      const token = localStorage.getItem("NR_token");
+      if (!token) {
+        toast.error("Please login to manage your reading list");
+        return;
+      }
+      
+      if (action === 'remove') {
+        await axios.delete(`${API_URL}/books/reading-list/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setReadingStatus(null);
+        toast.success("Removed from reading list");
+      } else {
+        // action is the status ('currentlyReading', 'wantToRead', 'completed')
+        if (readingStatus) {
+          // Update existing status
+          await axios.patch(
+            `${API_URL}/books/reading-list/${id}`,
+            { status: action },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+        } else {
+          // Add new to reading list
+          await axios.post(
+            `${API_URL}/books/reading-list`,
+            { bookId: id, status: action },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+        }
+        
+        setReadingStatus(action);
+        toast.success(
+          readingStatus 
+            ? `Moved to ${action.replace(/([A-Z])/g, ' $1').toLowerCase()}`
+            : "Added to reading list"
+        );
+      }
+    } catch (error) {
+      console.error("Error updating reading list:", error);
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please login again.");
+      } else {
+        toast.error("Failed to update reading list");
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
@@ -363,15 +457,34 @@ const BookDetailPage = () => {
 
                 <div className="flex flex-wrap gap-2">
                 <ReadBook book={book} />
-                  <button
-                    onClick={() => setIsInReadingList(!isInReadingList)}
-                    className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200 transition-colors font-medium font-handwritten flex items-center gap-1"
-                  >
-                    <BookOpenIcon className="h-4 w-4" />
-                    {isInReadingList
-                      ? "Remove from List"
-                      : "Add to Reading List"}
-                  </button>
+                {readingStatus ? (
+  <div className="flex gap-2">
+    <button
+      onClick={() => handleReadingListAction(readingStatus)}
+      className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded-md flex items-center gap-1"
+    >
+      {readingStatus === 'wantToRead' && <BookmarkIcon className="h-4 w-4" />}
+      {readingStatus === 'currentlyReading' && <BookOpenIcon className="h-4 w-4" />}
+      {readingStatus === 'completed' && <CheckCircleIcon className="h-4 w-4" />}
+      {readingStatus.replace(/([A-Z])/g, ' $1').toLowerCase()}
+    </button>
+    <button
+      onClick={() => handleReadingListAction('remove')}
+      className="px-2 py-1.5 bg-red-100 text-red-600 rounded-md hover:bg-red-200"
+    >
+      ✕
+    </button>
+  </div>
+) : (
+  <button
+    onClick={() => handleReadingListAction('wantToRead')}
+    className="px-3 py-1.5 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors font-medium flex items-center gap-1"
+  >
+    <BookOpenIcon className="h-4 w-4" />
+    Add to Reading List
+  </button>
+)}
+
                   <button
                     onClick={() => {setShowReviewForm(true);setShowReportForm(null)}}
                     className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200 transition-colors font-medium font-handwritten"

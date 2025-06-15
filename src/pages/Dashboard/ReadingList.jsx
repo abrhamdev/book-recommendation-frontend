@@ -3,94 +3,97 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaBook, FaBookmark, FaCheckCircle, FaSpinner, FaBars, FaChevronDown } from 'react-icons/fa';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-toastify';
+import { API_URL } from '../../../API_URL';
+import { useNavigate } from 'react-router-dom';
 
 const ReadingList = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [books, setBooks] = useState({
-    currentlyReading: [
-      {
-        id: 1,
-        title: 'The Midnight Library',
-        author: 'Matt Haig',
-        coverImage: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1602190253i/52578297.jpg',
-        progress: 65
-      },
-      {
-        id: 2,
-        title: 'Atomic Habits',
-        author: 'James Clear',
-        coverImage: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1655988385i/40121378.jpg',
-        progress: 30
-      }
-    ],
-    wantToRead: [
-      {
-        id: 3,
-        title: 'Project Hail Mary',
-        author: 'Andy Weir',
-        coverImage: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1597695864i/54493401.jpg'
-      },
-      {
-        id: 4,
-        title: 'Tomorrow, and Tomorrow, and Tomorrow',
-        author: 'Gabrielle Zevin',
-        coverImage: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1635862579i/58784475.jpg'
-      }
-    ],
-    completed: [
-      {
-        id: 5,
-        title: 'The Seven Husbands of Evelyn Hugo',
-        author: 'Taylor Jenkins Reid',
-        coverImage: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1664458703i/32620332.jpg'
-      },
-      {
-        id: 6,
-        title: 'Verity',
-        author: 'Colleen Hoover',
-        coverImage: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1634158558i/59344312.jpg'
-      }
-    ]
+    currentlyReading: [],
+    wantToRead: [],
+    completed: []
   });
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Since we have sample data, just set loading to false
-    setIsLoading(false);
-    // Uncomment below when API is ready
-    /*
     const fetchBooks = async () => {
       try {
-        const response = await axios.get('/api/reading-list', {
-          headers: { Authorization: `Bearer ${user.token}` }
+        setIsLoading(true);
+        const token = localStorage.getItem('NR_token');
+        
+        if (!token) {
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await axios.get(`${API_URL}/books/reading-list`, {
+          headers: { 
+            Authorization: `Bearer ${token}` 
+          }
         });
+        
         setBooks(response.data);
-        setIsLoading(false);
       } catch (error) {
-        console.error('Error fetching reading list:', error);
+        if (error.response?.status === 401) {
+          logout();
+          toast.error('Session expired. Please login again.');
+        } else {
+          toast.error('Failed to fetch reading list');
+        }
+      } finally {
         setIsLoading(false);
       }
     };
+
     fetchBooks();
-    */
-  }, []);
+  }, [logout]);
 
   const updateBookStatus = async (bookId, newStatus) => {
     try {
-      await axios.patch(`/api/reading-list/${bookId}`, {
-        status: newStatus
-      }, {
-        headers: { Authorization: `Bearer ${user.token}` }
+      const token = localStorage.getItem('NR_token');
+      await axios.patch(
+        `${API_URL}/books/reading-list/${bookId}`, 
+        { status: newStatus },
+        {
+          headers: { 
+            Authorization: `Bearer ${token}` 
+          }
+        }
+      );
+      
+      // Optimistically update the UI
+      setBooks(prev => {
+        const newBooks = { ...prev };
+        
+        // Remove from current status
+        Object.keys(newBooks).forEach(status => {
+          newBooks[status] = newBooks[status].filter(book => book.bookId !== bookId);
+        });
+        
+        // Add to new status
+        if (newBooks[newStatus]) {
+          const bookToMove = [...prev.currentlyReading, ...prev.wantToRead, ...prev.completed]
+            .find(book => book.bookId === bookId);
+          if (bookToMove) {
+            newBooks[newStatus].push({ ...bookToMove, status: newStatus });
+          }
+        }
+        
+        return newBooks;
       });
-      // Refresh books after update
-      const response = await axios.get('/api/reading-list', {
-        headers: { Authorization: `Bearer ${user.token}` }
-      });
-      setBooks(response.data);
+      
+      toast.success('Reading status updated');
     } catch (error) {
-      console.error('Error updating book status:', error);
+      if (error.response?.status === 401) {
+        logout();
+        toast.error('Session expired. Please login again.');
+      } else {
+        toast.error('Failed to update reading status');
+      }
     }
   };
 
@@ -129,7 +132,7 @@ const ReadingList = () => {
                   value={status}
                   onChange={(e) => {
                     e.stopPropagation();
-                    updateBookStatus(book.id, e.target.value);
+                    updateBookStatus(book.bookId, e.target.value);
                   }}
                   className="text-[10px] sm:text-xs border border-gray-200 rounded px-1.5 sm:px-2 py-0.5 sm:py-1 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-200 transition-all"
                 >
@@ -220,7 +223,7 @@ const ReadingList = () => {
         <h1 className="text-xl font-semibold text-gray-900">My Reading List</h1>
         <button
           onClick={() => {
-            // Add new book functionality
+            navigate('/dashboard/recommendations');
           }}
           className="bg-blue-500 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-600 transition-colors flex items-center gap-1.5"
         >
@@ -292,8 +295,8 @@ const ReadingList = () => {
           <>
             {getAllBooks().map((book) => {
               let status = 'wantToRead';
-              if (books.currentlyReading.find(b => b.id === book.id)) status = 'currentlyReading';
-              if (books.completed.find(b => b.id === book.id)) status = 'completed';
+              if (books.currentlyReading.find(b => b.bookId === book.bookId)) status = 'currentlyReading';
+              if (books.completed.find(b => b.bookId === book.bookId)) status = 'completed';
               
               return (
                 <BookCard
