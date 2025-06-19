@@ -1,15 +1,16 @@
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import {HeartIcon, ShareIcon, FlagIcon, BookmarkIcon, BookOpenIcon, HandThumbUpIcon, HandThumbDownIcon, ChatBubbleLeftIcon,  ArrowTopRightOnSquareIcon, LinkIcon, ChevronDownIcon,
+import {XMarkIcon, HeartIcon, ShareIcon, FlagIcon, HandThumbUpIcon, HandThumbDownIcon, ChatBubbleLeftIcon,  ArrowTopRightOnSquareIcon, LinkIcon, ChevronDownIcon,
 } from "@heroicons/react/24/outline";
 import {
   HeartIcon as HeartIconSolid,
   BookmarkIcon as BookmarkIconSolid,
   HandThumbUpIcon as HandThumbUpIconSolid,
-  HandThumbDownIcon as HandThumbDownIconSolid,
+  HandThumbDownIcon as HandThumbDownIconSolid
 } from "@heroicons/react/24/solid";
-import { Link, useParams } from "react-router-dom";
+
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { API_URL } from "../../API_URL";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -17,6 +18,7 @@ import { FaFacebook, FaFacebookF } from "react-icons/fa";
 import { X } from "lucide-react";
 
 import ReadBook from "../components/ReadBook";
+import ReadingListActions from '../components/ReadingListActions';
 
 const BookDetailPage = () => {
   const [book, setBook] = useState({});
@@ -26,7 +28,6 @@ const BookDetailPage = () => {
   const [reviewReload,setReviewReload]=useState(true);
   const [loading, setLoading] = useState(true);
   const [showReviewForm, setShowReviewForm] = useState(false);
-  const [isInReadingList, setIsInReadingList] = useState(false);
   const [reviewLikes, setReviewLikes] = useState({});
   const [showReplyForm, setShowReplyForm] = useState(null);
   const [replyText, setReplyText] = useState("");
@@ -37,7 +38,6 @@ const BookDetailPage = () => {
   const [selectedReviewId, setSelectedReviewId] = useState(null);
 
   const { id } = useParams();
-
   const [reviewFormData, setReviewFormData] = useState({
     bookId: id,
     rating: 1,
@@ -119,6 +119,20 @@ const BookDetailPage = () => {
   
     fetchRelatedBooks();
   }, [id,book]);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('openReview') === 'true') {
+      setShowReviewForm(true);
+      // Focus on the comment textarea after a short delay
+      setTimeout(() => {
+        const textarea = document.getElementById('comment');
+        if (textarea) {
+          textarea.focus();
+        }
+      }, 100);
+    }
+  }, []);
 
   const handleShare = () => {
     setShowShareOptions(!showShareOptions);
@@ -362,16 +376,8 @@ const BookDetailPage = () => {
                 )}
 
                 <div className="flex flex-wrap gap-2">
-                <ReadBook book={book} />
-                  <button
-                    onClick={() => setIsInReadingList(!isInReadingList)}
-                    className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200 transition-colors font-medium font-handwritten flex items-center gap-1"
-                  >
-                    <BookOpenIcon className="h-4 w-4" />
-                    {isInReadingList
-                      ? "Remove from List"
-                      : "Add to Reading List"}
-                  </button>
+                  <ReadBook book={book} />
+                  <ReadingListActions bookId={id} />
                   <button
                     onClick={() => {setShowReviewForm(true);setShowReportForm(null)}}
                     className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-md hover:bg-gray-200 transition-colors font-medium font-handwritten"
