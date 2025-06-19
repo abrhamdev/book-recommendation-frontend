@@ -19,6 +19,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from './components/PublicRoute';
 import ReadingListPage from "./pages/Dashboard/ReadingList";
 import BookForm from "./pages/Dashboard/bookForm";
+import PersonalRecommendationPage from "./pages/Dashboard/PersonalRecommendationPage";
+
 
 function App() {
   return (
@@ -73,7 +75,12 @@ function App() {
                 <SettingsPage />
               </ProtectedRoute>
             } />
-            <Route path="/underdevelopment" element={<FeatureUnderDevelopment />} />
+            <Route path="/dashboard/recommendations" element={
+              <ProtectedRoute>
+                <PersonalRecommendationPage />
+              </ProtectedRoute>
+            } />
+            <Route path="*" element={<FeatureUnderDevelopment />} />
           </Route>
         </Routes>
       </AuthProvider>
