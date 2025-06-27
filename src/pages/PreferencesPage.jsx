@@ -10,10 +10,11 @@ const PreferencesPage = () => {
   // Progress calculation
   const calculateProgress = () => {
     let progress = 0;
-    if (formData.languages.length > 0) progress += 25;
-    if (formData.genres.length > 0) progress += 25;
-    if (formData.ageGroup) progress += 25;
-    if (formData.bookLength) progress += 25;
+    if (formData.languages.length > 0) progress += 20;
+    if (formData.genres.length > 0) progress += 20;
+    if (formData.ageGroup) progress += 20;
+    if (formData.bookLength) progress += 20;
+    if (formData.authors.length>0) progress += 20;
     return progress;
   };
   const navigate = useNavigate();
@@ -77,7 +78,8 @@ const PreferencesPage = () => {
     }));
   };
 
-  const handleSubmit = async() => {
+  const handleSubmit = async(e) => {
+    e.preventDefault(); 
     const token = localStorage?.getItem("NR_token");
     try {
       if (formData.languages.length === 0) {
@@ -103,18 +105,26 @@ const PreferencesPage = () => {
   };
 
   const nextStep = () => {
-    if (currentStep === 0 && formData.languages.length === 0) {
-      toast.error('Please select at least one language');
-      return;
+    switch(currentStep) {
+      case 0: 
+        if (formData.languages.length === 0) {
+          toast.error('Please select at least one language');
+          return;
+        }
+        break;
+      case 1:
+        if (formData.genres.length === 0) {
+          toast.error('Please select at least one genre');
+          return;
+        }
+        break;
+      
+      default:
+        break;
     }
-    if (currentStep === 1 && formData.genres.length === 0) {
-      toast.error('Please select at least one genre');
-      return;
-    }
-    if (currentStep < steps.length - 1) {
+  
+    if (currentStep < steps.length-1) {
       setCurrentStep(prev => prev + 1);
-    } else {
-      handleSubmit();
     }
   };
 
@@ -342,7 +352,7 @@ const PreferencesPage = () => {
           </p>
         </div>
 
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="bg-white/10 backdrop-blur-sm rounded-2xl shadow-xl p-8">
+        <form className="bg-white/10 backdrop-blur-sm rounded-2xl shadow-xl p-8">
           <AnimatePresence mode="wait">
             {renderStep()}
           </AnimatePresence>
@@ -367,7 +377,7 @@ const PreferencesPage = () => {
                   Skip
                 </button>
               )}
-              {currentStep < steps.length - 1 ? (
+              {currentStep < steps.length -1 ? (
                 <button
                   type="button"
                   onClick={nextStep}
@@ -377,7 +387,8 @@ const PreferencesPage = () => {
                 </button>
               ) : (
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={e=>handleSubmit(e)}
                   className="px-6 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
                 >
                   Finish

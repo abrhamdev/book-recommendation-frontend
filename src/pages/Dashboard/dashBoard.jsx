@@ -5,6 +5,7 @@ import DashboardSidebar from '../../components/DashboardSidebar';
 import { API_URL } from '../../../API_URL';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 
 const UserDashboard = () => {
   
@@ -38,33 +39,14 @@ const UserDashboard = () => {
 
   // Sample data – replace with real data from API
   const user = {
-    name: 'John Doe',
+    name: 'user name',
     stats: {
       booksRead: 25,
       readingList: 8,
       reviewsWritten: 12,
       hoursSpent: 73,
     },
-    recommendations: [
-      {
-        title: 'The Alchemist',
-        author: 'Paulo Coelho',
-        cover:
-          'https://images-na.ssl-images-amazon.com/images/I/71aFt4+OTOL.jpg',
-      },
-      {
-        title: 'Atomic Habits',
-        author: 'James Clear',
-        cover:
-          'https://images-na.ssl-images-amazon.com/images/I/91bYsX41DVL.jpg',
-      },
-      {
-        title: 'Sapiens',
-        author: 'Yuval Noah Harari',
-        cover:
-          'https://images-na.ssl-images-amazon.com/images/I/713jIoMO3UL.jpg',
-      },
-    ],
+   
   };
 
   return (
@@ -76,7 +58,7 @@ const UserDashboard = () => {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard icon={<FaBook />} label="Books Read" value={user.stats.booksRead} />
-        <StatCard icon={<FaListAlt />} label="Reading List" value={user.stats.readingList} />
+        <Link to="/dashboard/readinglist"><StatCard icon={<FaListAlt />} label="Reading List" value={user.stats.readingList} /></Link>
         <StatCard icon={<FaStar />} label="Reviews Written" value={user.stats.reviewsWritten} />
         <StatCard icon={<FaClock />} label="Hours Spent" value={user.stats.hoursSpent} />
       </div>
@@ -91,8 +73,9 @@ const UserDashboard = () => {
               ) : (
                 <div className="grid sm:grid-cols-2 md:grid-cols-5 gap-4">
                   {recommendations.map((book) => (
+                    <Link key={book.id} to={`/book/${book.id}`}>
                     <div
-                      key={book.id}
+                      
                       className="bg-white rounded-xl shadow hover:shadow-lg transition"
                     >
                       <img
@@ -110,33 +93,12 @@ const UserDashboard = () => {
                         </button>
                       </div>
                     </div>
+                    </Link>
                   ))}
                 </div>
               )}
             </div>
 
-      {/* Continue Reading */}
-      <div>
-        <h2 className="text-2xl font-semibold mb-4">Continue Reading</h2>
-        <div className="bg-white rounded-xl shadow p-4 flex flex-col sm:flex-row items-center">
-          <img
-            src="https://images-na.ssl-images-amazon.com/images/I/71aFt4+OTOL.jpg"
-            alt="Current book"
-            className="w-28 h-40 object-cover rounded-lg mb-4 sm:mb-0 sm:mr-6"
-          />
-          <div className="flex-1">
-            <h3 className="text-xl font-semibold">The Alchemist</h3>
-            <p className="text-gray-600 mb-2">by Paulo Coelho</p>
-            <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
-              <div
-                className="bg-green-500 h-3 rounded-full"
-                style={{ width: '65%' }}
-              ></div>
-            </div>
-            <p className="text-sm text-gray-500">65% completed</p>
-          </div>
-        </div>
-      </div>
     </div>
     </div>
   );
