@@ -20,6 +20,10 @@ import PublicRoute from './components/PublicRoute';
 import ReadingListPage from "./pages/Dashboard/ReadingList";
 import BookForm from "./pages/Dashboard/bookForm";
 import PersonalRecommendationPage from "./pages/Dashboard/PersonalRecommendationPage";
+import AdminDashboard from "./pages/Dashboard/admin/adminDashboard";
+import ManageUsers from "./pages/Dashboard/admin/manageUser";
+import NotificationsPage from "./pages/Dashboard/admin/notification";
+import NotificationDetailPage from "./pages/Dashboard/admin/notificationDetail";
 
 
 function App() {
@@ -39,6 +43,7 @@ function App() {
               <HomePage />
             </PublicRoute>
           } />
+          
 
           {/* Protected Preferences Route (without Layout) */}
           <Route path="/preferences" element={
@@ -49,6 +54,26 @@ function App() {
 
           {/* Protected routes with Layout - Only accessible after preferences are set */}
           <Route element={<Layout />}>
+            <Route path="/admin/dashboard" element={
+              <ProtectedRoute>
+                <AdminDashboard/>
+              </ProtectedRoute>
+            }/>
+            <Route path="/admin/dashboard/manageuser" element={
+              <ProtectedRoute>
+                <ManageUsers/>
+              </ProtectedRoute>
+            }/>
+            <Route path="/admin/dashboard/notification" element={
+              <ProtectedRoute>
+                <NotificationsPage/>
+              </ProtectedRoute>
+            }/>
+            <Route path="/admin/dashboard/notification/detail" element={
+              <ProtectedRoute>
+                <NotificationDetailPage/>
+              </ProtectedRoute>
+            }/>
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <UserDashboard />
