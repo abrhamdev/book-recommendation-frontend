@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import BookReader from './BookReader';
 
 const PurchaseOptions = ({ isbns, onClose }) => {
   const [selectedSeller, setSelectedSeller] = useState(null);
@@ -157,8 +158,11 @@ const ReadBook = ({ book }) => {
   const [purchaseNotAvailable, setPurchaseNotAvailable] = useState(false);
   const [showPurchaseOptions, setShowPurchaseOptions] = useState(false);
   const [isbnList, setIsbnList] = useState([]);
+  const [showReader, setShowReader] = useState(false);
 
   const getBookIsbn = (book) => {
+    if (book?.id?.startsWith('local-')) return [];
+
     if (!book?.industryIdentifiers) return [];
     
     const isbns = [];
@@ -191,6 +195,11 @@ const ReadBook = ({ book }) => {
 
   const handleReadBook = () => {
     try {
+    // For local books: use our custom reader
+    if (book?.id?.startsWith('local-')) {
+      setShowReader(true);
+      return;
+    }
       const isbns = getBookIsbn(book);
       
       // If book has FULL or ALL_PAGES viewability and a preview link
@@ -258,7 +267,13 @@ const ReadBook = ({ book }) => {
               {book?.viewability === "PARTIAL" ? "Preview Book" : "Read Book"}
             </button>
           )}
-
+        {/* Reader Component */}
+        {showReader && (
+          <BookReader 
+            book={book} 
+            onClose={() => setShowReader(false)} 
+          />
+        )}
           {/* Purchase Button */}
           {["PARTIAL", "NO_PAGES"].includes(book?.viewability) && (
             purchaseNotAvailable ? (

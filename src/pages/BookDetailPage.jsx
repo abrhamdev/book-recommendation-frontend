@@ -54,17 +54,24 @@ const BookDetailPage = () => {
   };
 
   useEffect(() => {
-    if (!id) return;
-    const fetchBook = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/books/getBook/${id}`);
-        setBook(response.data);
-      } catch (err) {
-        console.error("Error fetching book:", err);
-      }
-    };
-    fetchBook();
-  }, [id]);
+  if (!id) return;  
+  const fetchBook = async () => {
+    try {
+      // Determine if it's a local book
+      const isLocalBook = id.startsWith('local-');
+      
+      const endpoint = isLocalBook 
+        ? `${API_URL}/books/local/${id.replace('local-', '')}`
+        : `${API_URL}/books/getBook/${id}`;
+      const response = await axios.get(endpoint);
+      setBook(response.data);
+    } catch (err) {
+      console.error("Error fetching book:", err);
+    }
+  };
+  
+  fetchBook();
+}, [id]);
 
   useEffect(() => {
     const fetchReviews = async () => {
