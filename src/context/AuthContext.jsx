@@ -1,13 +1,33 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from "axios";
+import { API_URL } from '../../API_URL';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [userData, setUserData] = useState(null); //to be replace user state is we get time
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const token = localStorage.getItem("NR_token");
+    if (!token) return;
+    const getUser = async () => {
+  try{
+    const response =await axios.post(`${API_URL}/users/me`,{}, {
+      headers: {
+         Authorization: `Bearer ${token}`,
+         }
+    })
+      setUserData(response.data.user);
+  }catch(error){
+      setUserData(null);
+    }}
+    getUser();
+  }, []);
+  
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -73,7 +93,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, setPreferences }}>
+    <AuthContext.Provider value={{ userData,user, login, logout, setPreferences }}>
       {children}
     </AuthContext.Provider>
   );

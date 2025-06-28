@@ -24,6 +24,7 @@ import AdminDashboard from "./pages/Dashboard/admin/adminDashboard";
 import ManageUsers from "./pages/Dashboard/admin/manageUser";
 import NotificationsPage from "./pages/Dashboard/admin/notification";
 import NotificationDetailPage from "./pages/Dashboard/admin/notificationDetail";
+import BookManagement from "./pages/Dashboard/admin/bookManagement";
 
 
 function App() {
@@ -62,6 +63,11 @@ function App() {
             <Route path="/admin/dashboard/manageuser" element={
               <ProtectedRoute>
                 <ManageUsers/>
+              </ProtectedRoute>
+            }/>
+            <Route path="/admin/dashboard/managebook" element={
+              <ProtectedRoute>
+                <BookManagement/>
               </ProtectedRoute>
             }/>
             <Route path="/admin/dashboard/notification" element={

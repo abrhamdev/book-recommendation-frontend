@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useAuth } from "../../../context/AuthContext";
 import {
   FaBook,
   FaUsers,
@@ -21,6 +22,7 @@ const AdminDashboard = () => {
     totalReadingLists: 0,
   });
   const [loading, setLoading] = useState(false);
+  const { userData } = useAuth();
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -33,6 +35,7 @@ const AdminDashboard = () => {
           },
         });
         setStats(response.data);
+        
       } catch (error) {
         console.error(error);
       } finally {
@@ -43,10 +46,10 @@ const AdminDashboard = () => {
   }, []);
 
   const adminActions = [
-    { label: "Manage Books", icon: <FaBook />, link: "/admin/books" },
+    { label: "Manage Books", icon: <FaBook />, link: "/admin/dashboard/managebook" },
     { label: "Manage Users", icon: <FaUsers />, link: "/admin/dashboard/manageuser" },
     { label: "Moderate Reviews", icon: <FaCommentAlt />, link: "/admin/reviews" },
-    { label: "Send Notifications", icon: <FaBell />, link: "/admin/notifications" },
+    { label: "Notifications", icon: <FaBell />, link: "/admin/dashboard/notification" },
     { label: "View Reports & Logs", icon: <FaChartLine />, link: "/admin/reports" },
     { label: "Reading Lists", icon: <FaListAlt />, link: "/admin/reading-lists" },
     { label: "Site Settings", icon: <FaTools />, link: "/admin/settings" },
@@ -57,7 +60,7 @@ const AdminDashboard = () => {
     <div className="pt-20 pl-10 md:px-10 lg:px-24 xl:px-32 max-w-screen-xl mx-auto">
       <div className="p-6">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <p className="text-gray-600 mt-1">Welcome back, Admin 👋</p>
+        <p className="text-gray-600 mt-1">Welcome back, {userData?.name }</p>
 
         {/* Stats Section */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
