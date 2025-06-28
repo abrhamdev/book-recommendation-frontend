@@ -40,9 +40,10 @@ const SignupPage = () => {
 
   const onSubmit = async (data) => {
     try {
-      toast(`Verify Your Email! We have sent Verification link to ${data.email}`,{
+     /* toast(`Verify Your Email! We have sent Verification link to ${data.email}`,{
         autoClose:5000,
-      });
+      });*/
+      
       const response = await axios.post(`${API_URL}/users/signup`, data);
       toast.success( response.data.message);
       
