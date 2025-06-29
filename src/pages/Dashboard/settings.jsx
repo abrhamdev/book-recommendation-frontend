@@ -1,7 +1,13 @@
-import { useState,useEffect } from 'react';
+import { useState,useEffect,useRef } from 'react';
 import { API_URL } from '../../../API_URL';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import {
+  languages,
+  allGenreItems,
+  ageGroups,
+  bookLengths
+} from '../../data/preferenceOptions'; 
 import {
   UserCircleIcon,
   PencilIcon,
@@ -28,16 +34,45 @@ const ProfileSettings = () => {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [user,setUser]=useState();
+  const [preference, setPreference] = useState(null);
+  const [editPreferenceMode, setEditPreferenceMode] = useState(false);
+  const [profileFormData, setProfileFormData] = useState({
+      name: '',
+      email: '',
+      birth_date: '',
+      location: '',
+    });
+  const fileInputRef = useRef(null);
   
-  const [profile, setProfile] = useState({
-    name: 'Alex Johnson',
-    email: 'alex@example.com',
-    auth_provider: 'local',
-    birth_date: '1990-01-15',
-    location: 'New York, USA',
-    profile_picture: 'https://randomuser.me/api/portraits/men/32.jpg',
-    created_at: '2023-01-01T00:00:00Z'
-  });
+    const handleEditClick = () => {
+      fileInputRef.current.click();
+    };
+  
+    const handleFileChange = async (e) => {
+      const token = localStorage.getItem("NR_token");
+      const selectedFile = e.target.files[0];
+      if (!selectedFile) return;
+  
+      // Create form data
+      const formData = new FormData();
+      formData.append("profile_picture", selectedFile);
+  
+      try {
+        // Call your backend API
+        const response = await axios.post(`${API_URL}/users/me/upload-profile-picture`, formData, {
+          headers: { 
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        toast.success(response.data.message);
+        
+      } catch (error) {
+        toast.error(error.response?.data.message);
+        alert("Error uploading profile picture");
+      }
+    };
+
 
     useEffect(() => {
       const token = localStorage.getItem("NR_token");
@@ -51,14 +86,116 @@ const ProfileSettings = () => {
       })
       
         setUser(response.data.user);
-      
+        setProfileFormData({
+                  name: response.data.user.name || '',
+                  email: response.data.user.email || '',
+                  birth_date: response.data.user.birth_date ? new Date(response.data.user.birth_date).toISOString().split('T')[0] : '', 
+                  location: response.data.user.location || '',
+                });
     }catch(error){
-        toast.error(error.response?.data.message)
+      toast.error(error.response?.data.message);
         setUser(null);
       }}
+      
+      const getPreference = async () => {
+            try {
+              const response = await axios.post(`${API_URL}/users/me/fetchPreferences`,{}, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+              });
+              const prefData = response.data;
+              setPreference({
+                ...prefData,
+                age_group:prefData.age_group || '',
+                book_length:prefData.book_length || '',
+                languages: JSON.parse(prefData.languages || '[]'),
+                genres: JSON.parse(prefData.genres || '[]'),
+                authors: JSON.parse(prefData.authors || '[]'),
+              });
+              
+            } catch (error) {
+              toast.error(error.response?.data.message);
+              setPreference(null);
+            }
+          };
+      
       getUser();
+      getPreference();
     }, []);
+    
+    const handleUpdateProfile = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem("NR_token");
+        if (!token) {
+          toast.error("Authentication token not found.");
+          return;
+        }
+    
+        try {
+          // Send only the fields that are allowed to be updated
+          const updatePayload = {
+            name: profileFormData.name,
+            email: profileFormData.email,
+            birth_date: profileFormData.birth_date,
+            location: profileFormData.location,
+          };
+    
+          await axios.post(`${API_URL}/users/me/updateProfile`, updatePayload, { 
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          toast.success("Profile updated successfully!");
+          const response = await axios.post(`${API_URL}/users/me/profile`,{}, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setUser(response.data.user);
+          setEditMode(false); // Exit edit mode
+        } catch (error) {
+          toast.error(error.response?.data.message || "Failed to update profile.");
+        }
+      };
 
+
+    const handleUpdatePreference = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem("NR_token");
+        try {
+          const payload = {
+            ...preference,
+            ageGroup:preference.age_group || '',
+            bookLength:preference.book_length || '',
+            languages: JSON.stringify(preference.languages),
+            genres: JSON.stringify(preference.genres),
+            authors: JSON.stringify(preference.authors),
+          };
+          await axios.post(`${API_URL}/users/me/updatePreference`, payload, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          toast.success("Preferences updated successfully!");
+          setEditPreferenceMode(false);
+        } catch (error) {
+          toast.error(error.response?.data.message || "Failed to update preferences.");
+        }
+      };
+    
+      const handlePreferenceInputChange = (e) => {
+        const { name, value } = e.target;
+        setPreference(prev => ({ ...prev, [name]: value }));
+      };
+    
+      const handleMultiSelectChange = (name, value) => {
+        setPreference(prev => ({
+          ...prev,
+          [name]: prev[name].includes(value)
+            ? prev[name].filter(item => item !== value)
+            : [...prev[name], value]
+        }));
+      };
+    
   // Sample connected devices
   const [devices, setDevices] = useState([
     { id: 1, name: 'iPhone 13', os: 'iOS', last_active: '2023-06-20T14:30:00Z', current: true },
@@ -70,7 +207,6 @@ const ProfileSettings = () => {
     notificationEnabled: true,
     newsletterSubscribed: false,
     darkMode: false,
-    preferredGenres: ['Fantasy', 'Science Fiction'],
     readingGoal: 24
   });
 
@@ -93,12 +229,12 @@ const ProfileSettings = () => {
   };
 
   const handleProfileChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setProfile(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
+      const { name, value } = e.target;
+      setProfileFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    };
 
   const handlePreferenceChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -271,7 +407,7 @@ const ProfileSettings = () => {
                   <div className="flex flex-col md:flex-row md:items-start gap-6">
                     <div className="relative self-center md:self-start">
                       <img
-                        src={user?.profile_picture || ''}
+                        src={user?.profile_picture}
                         alt={user?.name}
                         className="h-24 w-24 rounded-full object-cover"
                       />
@@ -327,21 +463,33 @@ const ProfileSettings = () => {
                   </div>
                 </>
               ) : (
-                <form onSubmit={(e) => { e.preventDefault(); setEditMode(false); }} className="space-y-6">
+                <>
                   <div className="flex flex-col md:flex-row md:items-start gap-6">
-                    <div className="relative self-center md:self-start">
-                      <img
-                        src={user?.profile_picture}
-                        alt={user?.name}
-                        className="h-24 w-24 rounded-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        className="absolute bottom-0 right-0 bg-indigo-600 p-2 rounded-full shadow-sm hover:bg-indigo-700"
-                      >
-                        <PencilIcon className="h-4 w-4 text-white" />
-                      </button>
-                    </div>
+                  <div className="relative self-center md:self-start">
+                    <img
+                      src={user?.profile_picture}
+                      alt={user?.name}
+                      className="h-24 w-24 rounded-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleEditClick}
+                      className="absolute bottom-0 right-0 bg-indigo-600 p-2 rounded-full shadow-sm hover:bg-indigo-700"
+                    >
+                      <PencilIcon className="h-4 w-4 text-white" />
+                    </button>
+                    <input
+                             ref={fileInputRef}
+                             type="file"
+                             accept="image/*"
+                             className="hidden"
+                             onChange={handleFileChange}
+                           />
+                  </div>
+                  </div>
+                <form onSubmit={(e) => { handleUpdateProfile(e); setEditMode(false); }} className="space-y-6">
+                  <div className="flex flex-col md:flex-row md:items-start gap-6">
+                    
                     <div className="flex-1 space-y-4">
                       <div>
                         <label htmlFor="name" className="block text-sm font-medium text-gray-700">
@@ -351,7 +499,7 @@ const ProfileSettings = () => {
                           type="text"
                           id="name"
                           name="name"
-                          value={user.name}
+                          value={profileFormData.name}
                           onChange={handleProfileChange}
                           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                         />
@@ -364,7 +512,7 @@ const ProfileSettings = () => {
                           type="email"
                           id="email"
                           name="email"
-                          value={user.email}
+                          value={profileFormData?.email || null}
                           onChange={handleProfileChange}
                           className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                         />
@@ -381,7 +529,7 @@ const ProfileSettings = () => {
                         type="date"
                         id="birth_date"
                         name="birth_date"
-                        value={user.birth_date}
+                        value={profileFormData?.birth_date || ''}
                         onChange={handleProfileChange}
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                       />
@@ -394,7 +542,7 @@ const ProfileSettings = () => {
                         type="text"
                         id="location"
                         name="location"
-                        value={user.location}
+                        value={profileFormData?.location || ''}
                         onChange={handleProfileChange}
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                       />
@@ -417,6 +565,7 @@ const ProfileSettings = () => {
                     </button>
                   </div>
                 </form>
+                </>
               )}
             </div>
           )}
@@ -452,13 +601,13 @@ const ProfileSettings = () => {
                         <div>
                           <h3 className="text-base font-medium text-gray-900">Password</h3>
                           <p className="text-sm text-gray-500">
-                            {profile.auth_provider === 'google' ? 
+                            {user?.auth_provider === 'google' ? 
                               'You use Google to sign in. Password changes must be made through your Google account.' : 
                               'Last changed 3 months ago'}
                           </p>
                         </div>
                       </div>
-                      {profile.auth_provider === 'local' && (
+                      {user?.auth_provider === 'local' && (
                         <button
                           onClick={() => setSecurityAction('password')}
                           className="ml-4 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -618,24 +767,58 @@ const ProfileSettings = () => {
                     Reading Preferences
                   </h2>
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Preferred Genres
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {allGenres.map(genre => (
-                          <button
-                            key={genre}
-                            type="button"
-                            onClick={() => handleGenreToggle(genre)}
-                            className={`px-3 py-1 rounded-full text-sm font-medium ${preferences.preferredGenres.includes(genre) ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'}`}
-                          >
-                            {genre}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
+                    {preference && (
+                      !editPreferenceMode ? (
+                        <div className="space-y-4">
+                          <p><strong>Age Group:</strong> {preference.age_group}</p>
+                          <p><strong>Book Length:</strong> {preference.book_length}</p>
+                          <p><strong>Languages:</strong> {preference.languages.join(', ')}</p>
+                          <p><strong>Genres:</strong> {preference.genres.join(', ')}</p>
+                        </div>):(
+                                              <form onSubmit={handleUpdatePreference} className="space-y-6">
+                                                <div>
+                                                  <label htmlFor="age_group" className="block text-sm font-medium text-gray-700">Age Group</label>
+                                                  <select id="age_group" name="age_group" value={preference.age_group} onChange={handlePreferenceInputChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3">
+                                                    {ageGroups.map(group => <option key={group.value} value={group.value}>{group.label}</option>)}
+                                                  </select>
+                                                </div>
+                                                <div>
+                                                  <label htmlFor="book_length" className="block text-sm font-medium text-gray-700">Book Length</label>
+                                                  <select id="book_length" name="book_length" value={preference.book_length} onChange={handlePreferenceInputChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3">
+                                                    {bookLengths.map(len => <option key={len.value} value={len.value}>{len.label}</option>)}
+                                                  </select>
+                                                </div>
+                                                <div>
+                                                  <label className="block text-sm font-medium text-gray-700 mb-2">Languages</label>
+                                                  <div className="flex flex-wrap gap-2">
+                                                    {languages.map(lang => (
+                                                      <button key={lang} type="button" onClick={() => handleMultiSelectChange('languages', lang)} className={`px-3 py-1 rounded-full text-sm font-medium ${preference.languages.includes(lang) ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                        {lang}
+                                                      </button>
+                                                    ))}
+                                                  </div>
+                                                </div>
+                                                <div>
+                                                  <label className="block text-sm font-medium text-gray-700 mb-2">Genres</label>
+                                                  <div className="flex flex-wrap gap-2">
+                                                    {allGenreItems.map(genre => (
+                                                      <button key={genre} type="button" onClick={() => handleMultiSelectChange('genres', genre)} className={`px-3 py-1 rounded-full text-sm font-medium ${preference.genres.includes(genre) ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                        {genre}
+                                                      </button>
+                                                    ))}
+                                                  </div>
+                                                </div>
+                                                <div className="flex justify-end gap-3">
+                                                  <button type="button" onClick={() => setEditPreferenceMode(false)} className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                                    Cancel
+                                                  </button>
+                                                  <button type="submit" className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                                                    Save Changes
+                                                  </button>
+                                                </div>
+                                              </form>
+                                            ))}
+                   {/* <div>
                       <label htmlFor="readingGoal" className="block text-sm font-medium text-gray-700">
                         Annual Reading Goal
                       </label>
@@ -652,7 +835,16 @@ const ProfileSettings = () => {
                       <p className="mt-1 text-sm text-gray-500">
                         Set your yearly book reading target
                       </p>
-                    </div>
+                   </div>*/}
+                   {!editPreferenceMode && (
+                                         <button
+                                           onClick={() => setEditPreferenceMode(true)}
+                                           className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                                         >
+                                           <PencilIcon className="h-4 w-4 mr-2" />
+                                           Edit
+                                         </button>
+                                       )}
                   </div>
                 </div>
 

@@ -327,7 +327,7 @@ const SearchResultsPage = () => {
                     viewMode === 'list' ? 'flex' : ''
                   }`}
                 >
-                  <Link to={`/book/${book.id}`} className={`${viewMode === 'list' ? 'flex' : 'block'}`}>
+                  <Link to={`/book/${book.id.startsWith('local-') ? 'local-' : ''}${book.id.replace('local-', '')}`} className={`${viewMode === 'list' ? 'flex' : 'block'}`}>
                     <img
                       src={book.volumeInfo.imageLinks?.thumbnail}
                       alt={book.title}

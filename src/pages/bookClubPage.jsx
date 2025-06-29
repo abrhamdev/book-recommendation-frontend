@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import io from 'socket.io-client';
+import { useAuth } from '../context/AuthContext';
+import { FaSpinner } from 'react-icons/fa';
 import {
   UserGroupIcon,
   ChatBubbleLeftIcon,
@@ -9,6 +11,9 @@ import {
   ChevronUpIcon,
   PlusIcon,
   UsersIcon,
+  Cog6ToothIcon,
+  BookOpenIcon,
+  BookmarkSquareIcon,
 } from "@heroicons/react/24/outline";
 import axios from "axios";
 import { API_URL, SOCKET_URL } from "../../API_URL";
@@ -21,18 +26,26 @@ const socket = io(SOCKET_URL, {
 });
 
 const BookClubsPage = () => {
+  const { userData } = useAuth();
   const [activeTab, setActiveTab] = useState("bookClubs");
   const [selectedClub, setSelectedClub] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [clubloading, setclubLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [joinedClubs, setJoinedClubs] = useState([]);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [members, setMembers] = useState([]);
   const [allClubs, setAllClubs] = useState([]);
   const [viewMode, setViewMode] = useState("list"); // 'list' or 'chat'
+  
+  //for club setting book search for selecting current book
+  const [booksearchQuery, booksetSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedBook, setSelectedBook] = useState(null);
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -42,7 +55,73 @@ const BookClubsPage = () => {
   });
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const [isClubSettingModalOpen, setIsClubSettingModalOpen] = useState(false);
+  const [activeClubSettingTab, setActiveClubSettingTab] = useState('currentBook');
 
+  const isModerator =members.some(
+    (member) => member.id === userData?.id && member.role === 'moderator'
+  );
+  //state for pagination
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalItems: 0,
+    itemsPerPage: 10
+  });
+  
+  //for searching book
+  useEffect(() => {
+  if (booksearchQuery.trim() === '') {
+    setSearchResults([]);
+    setPagination(prev => ({ ...prev, totalItems: 0 }));
+    return;
+  }
+
+  const timeoutId = setTimeout(async () => {
+    setSelectedBook(null);
+    setSearchLoading(true);
+    try {
+       
+      const startIndex = (pagination.currentPage - 1) * pagination.itemsPerPage;
+      
+
+      const response = await axios.get(
+        `${API_URL}/books/search?q=${encodeURIComponent(booksearchQuery)}&startIndex=${startIndex}&maxResults=${pagination.itemsPerPage}`
+      );
+      setSearchResults(response.data.items || []);
+      setPagination(prev => ({
+        ...prev,
+        totalItems: response.data.totalItems
+      }));
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSearchLoading(false);
+    }
+  }, 500);
+
+  return () => clearTimeout(timeoutId);
+}, [
+  booksearchQuery, 
+  pagination.currentPage,
+]);
+  
+  // selected current book
+  const handleSetCurrentBook=async(book)=>{
+    const token = localStorage?.getItem("NR_token");
+    try{
+      const response = await axios.post(`${API_URL}/community/bookclub/setcurrentbook`,{book}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        
+      });
+      toast.success(response.data.message);
+    }catch(error){
+      toast.error(error?.response?.data.message);
+    }
+  }
+  
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
@@ -139,7 +218,7 @@ const BookClubsPage = () => {
     e.preventDefault();
     const token = localStorage?.getItem("NR_token");
     try {
-      setLoading(true);
+      setclubLoading(true);
 
       const formDataToSend = new FormData();
       formDataToSend.append("name", formData.name);
@@ -174,7 +253,7 @@ const BookClubsPage = () => {
     } catch (err) {
       toast.error(err.response?.data?.message || "Something went wrong");
     } finally {
-      setLoading(false);
+      setclubLoading(false);
     }
   };
 
@@ -391,6 +470,12 @@ const BookClubsPage = () => {
                                   </span>{" "}
                                   by {club.currentBook?.author}
                                 </p>
+                                <p className="text-sm text-gray-600 mb-2">
+                                  Genre Focus:{" "}
+                                  <span className="text-indigo-600">
+                                    {club.genre_focus}
+                                  </span>{" "}
+                                </p>
                                 <div className="flex items-center gap-4 text-xs text-gray-500">
                                   <span>{club.member_count} members</span>
                                   <span>•</span>
@@ -407,15 +492,26 @@ const BookClubsPage = () => {
                       /* Chat Room */
                       <div className="bg-white rounded-lg border border-gray-200 h-full flex flex-col">
                       {/* Chat Header */}
-                      <div className="py-1 px-4 border-b border-gray-200">
-                        <h3 className="text-lg font-medium text-gray-900">
-                          {selectedClub?.name}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          Currently reading: {selectedClub?.currentBook?.title}
-                        </p>
+                      <div className="py-1 px-4 border-b border-gray-200 flex items-center justify-between">
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900">
+                            {selectedClub?.name}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            Currently reading: {selectedClub?.currentBook?.title}
+                          </p>
+                        </div>
+                            {isModerator && (
+                              <button
+                                className="text-gray-500 hover:text-gray-700 ml-4 cursor-pointer"
+                                onClick={() => setIsClubSettingModalOpen(true)}
+                                aria-label="Club settings"
+                              >
+                                <Cog6ToothIcon className="h-6 w-6 text-gray-600" />
+                              </button>)}
                       </div>
-                
+
+                      
                       {/* Messages Area */}
                       <div className="flex-1 p-4 min-h-80 overflow-y-auto  max-h-[430px]">
                         {messages.length > 0 ? (
@@ -476,8 +572,148 @@ const BookClubsPage = () => {
                         </div>
                       </form>
                     </div>
+                    
                     )}
                   </div>
+                  {isClubSettingModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+                      {/* Modal Container */}
+                      <div className="bg-white w-full max-w-4xl h-[500px] rounded-lg shadow-lg flex">
+                        {/* Left Menu */}
+                        <div className="w-1/3 border-r border-gray-200 p-4 space-y-3 bg-gray-50">
+                          <h2 className="text-lg font-semibold text-gray-800 mb-4">Club Settings</h2>
+                          <ul className="space-y-2 text-sm">
+                            <li
+                              className={`cursor-pointer p-2 rounded ${activeClubSettingTab === 'currentBook' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}
+                              onClick={() => setActiveClubSettingTab('currentBook')}
+                            >
+                              <BookOpenIcon className="h-5 w-5" />
+                                Current Book
+                            </li>
+                            <li
+                              className={`cursor-pointer p-2 rounded ${activeClubSettingTab === 'nextBook' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}
+                              onClick={() => setActiveClubSettingTab('nextBook')}
+                            >
+                              <BookmarkSquareIcon className="h-5 w-5" />
+                                Next Book
+                            </li>
+                            <li
+                              className={`cursor-pointer p-2 rounded ${activeClubSettingTab === 'meeting' ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}
+                              onClick={() => setActiveClubSettingTab('meeting')}
+                            >
+                              <CalendarIcon className="h-5 w-5" />
+                                Next Meeting
+                            </li>
+                          </ul>
+                        </div>
+                  
+                        {/* Right Content */}
+                        <div className="flex-1 p-6 overflow-y-auto relative">
+                          {/* Close Button */}
+                          <button
+                            onClick={() => setIsClubSettingModalOpen(false)}
+                            className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-xl"
+                            aria-label="Close settings"
+                          >
+                            &times;
+                          </button>
+                  
+                          {activeClubSettingTab === 'currentBook' && (
+                            <div>
+                              <h3 className="text-lg font-medium text-gray-900 mb-4">Set Current Book</h3>
+                          
+                              {/* Search Input */}
+                              <div className="flex gap-2 mb-4">
+                                <input
+                                  type="text"
+                                  placeholder="Search for a book..."
+                                  className="w-full border border-gray-300 rounded-md p-2"
+                                  value={booksearchQuery}
+                                  onChange={(e) => booksetSearchQuery(e.target.value)}
+                                />
+                                <button
+                                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                  
+                                >
+                                  Search
+                                </button>
+                              </div>
+                          
+                              {/* Search Results */}
+                              { searchLoading ?
+                                <div className="w-full flex justify-center"><FaSpinner className="animate-spin text-4xl text-blue-600" /></div>
+                                :searchResults.length > 0 && (
+                                <div className="space-y-3 mb-6">
+                                  <h4 className="text-sm font-semibold text-gray-800">Select a book:</h4>
+                                  {searchResults.map((book, idx) => (
+                                    <div
+                                      key={idx}
+                                      className={`flex items-center gap-4 p-2 rounded border ${
+                                        selectedBook?.title === book.volumeInfo.title ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                                      } cursor-pointer hover:bg-gray-50`}
+                                      onClick={() => setSelectedBook(book)}
+                                    >
+                                      <img src={book?.volumeInfo
+.imageLinks?.thumbnail
+} alt={book.title} className="w-10 h-14 object-cover rounded" />
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-900">{book.volumeInfo.title}</p>
+                                        <p className="text-sm text-gray-600">{book.volumeInfo.authors}</p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                          
+                              {/* Selected Book Summary */}
+                              {selectedBook && (
+                                <div className="border-t pt-4">
+                                  <h4 className="text-sm font-semibold text-gray-800 mb-2">Selected Book:</h4>
+                                  <div className="flex items-center gap-3">
+                                    <img src={selectedBook.volumeInfo
+.imageLinks?.thumbnail} alt={selectedBook.volumeInfo.title} className="w-12 h-16 rounded object-cover" />
+                                    <div>
+                                      <p className="font-medium text-gray-900">{selectedBook.volumeInfo.title}</p>
+                                      <p className="text-sm text-gray-600">{selectedBook.volumeInfo.authors}</p>
+                                    </div>
+                                  </div>
+                          
+                                  <button
+                                    className="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                                    onClick={() => handleSetCurrentBook(selectedBook)}
+                                  >
+                                    Set as Current Book
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                  
+                          {activeClubSettingTab === 'nextBook' && (
+                            <div>
+                              <h3 className="text-lg font-medium text-gray-900 mb-4">Next Book</h3>
+                              <input
+                                type="text"
+                                placeholder="e.g. Brave New World by Aldous Huxley"
+                                className="w-full border border-gray-300 rounded-md p-2"
+                              />
+                            </div>
+                          )}
+                  
+                          {activeClubSettingTab === 'meeting' && (
+                            <div>
+                              <h3 className="text-lg font-medium text-gray-900 mb-4">Next Meeting</h3>
+                              <input
+                                type="datetime-local"
+                                className="w-full border border-gray-300 rounded-md p-2"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Right Panel - Club Details or Members List */}
                   <div className="w-80 flex-shrink-0">
@@ -1000,10 +1236,10 @@ const BookClubsPage = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={clubloading}
                   className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? "Creating..." : "Create Book Club"}
+                  {clubloading ? "Creating..." : "Create Book Club"}
                 </button>
               </div>
             </form>
