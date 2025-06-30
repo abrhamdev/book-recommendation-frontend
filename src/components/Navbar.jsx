@@ -5,9 +5,12 @@ import { MagnifyingGlassIcon, Bars3Icon, XMarkIcon, ChevronDownIcon } from '@her
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { API_URL } from '../../API_URL';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
 const Navbar = () => {
+  const { i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -83,6 +86,11 @@ const Navbar = () => {
   
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
+
+  useEffect(() => {
+  // This forces re-render when language changes
+}, [i18n.language]);
+
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -314,12 +322,22 @@ const Navbar = () => {
                 </AnimatePresence>
               </div>
             ) : (
-              <Link
-                to="/login"
-                className="text-xs font-medium text-gray-700 hover:text-indigo-600 transition-colors"
+              <div className="flex items-center gap-4">
+                <Link
+                  to="/login"
+                  className="text-xs font-medium text-gray-700 hover:text-indigo-600 transition-colors"
+                >
+                  Sign In
+                </Link>
+                <select 
+                onChange={(e) => i18n.changeLanguage(e.target.value)}
+                value={i18n.language}
+                className="text-xs font-medium text-gray-700 hover:text-indigo-600 bg-transparent border-none focus:ring-0 cursor-pointer"
               >
-                Sign In
-              </Link>
+                <option value="en">EN</option>
+                <option value="am">አማ</option>
+              </select>
+            </div>
             )}
 
             {/* Mobile Menu Button */}
