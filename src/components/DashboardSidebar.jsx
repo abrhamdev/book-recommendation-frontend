@@ -11,21 +11,24 @@ import {
   BellIcon,
   Cog6ToothIcon,
   XMarkIcon,
-  Bars3Icon
+  Bars3Icon,
+  Squares2X2Icon
 } from '@heroicons/react/24/outline';
 
 const DashboardSidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { user } = useAuth();
+  const { userData } = useAuth();
   const token = localStorage.getItem('NR_token');
+  const role = userData?.role;
 
   // Only render sidebar for authenticated users
-  if (!user || !token) {
+  if (!userData || !token) {
     return null;
   }
 
   const navigation = [
+    { name: 'Admin Dashboard', href: '/admin/dashboard', icon: Squares2X2Icon, description: 'customization tools' },
     { name: 'Home', href: '/dashboard', icon: HomeIcon, description: 'Your reading dashboard' },
     { name: 'Reading List', href: '/dashboard/readinglist', icon: BookOpenIcon, description: 'Your reading collection' },
     { name: 'Community', href: '/community/bookClub', icon: UserGroupIcon, description: 'Connect with others' },
@@ -75,7 +78,13 @@ const DashboardSidebar = () => {
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto py-4">
             <ul className="space-y-1">
-              {navigation.map((item) => (
+              {navigation.filter(item => {
+                      // Show "Admin Dashboard" and "Notification" only to admin
+                      if ((item.name === 'Admin Dashboard' || item.name === 'Notification') && role !== 'admin') {
+                        return false;
+                      }
+                      return true;
+                    }).map((item) => (
                 <li key={item.name}>
                   <Link
                     to={item.href}

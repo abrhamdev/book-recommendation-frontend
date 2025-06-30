@@ -23,6 +23,7 @@ const PersonalRecommendationPage = () => {
         }
       );
       setRecommendations(response.data.books);
+      
     } catch (error) {
       toast.error(error?.response?.data?.error || "Failed to fetch recommendations");
     } finally {

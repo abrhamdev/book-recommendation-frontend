@@ -2,16 +2,14 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const ProtectedRoute = ({ children, requirePreferences = false }) => {
-  const { user } = useAuth();
-  const hasPreferences = localStorage.getItem('userPreferences');
-  
+  const { userData,preference,user } = useAuth();
   if (!user) {
     // Redirect to login if there's no user
     return <Navigate to="/login" replace />;
   }
 
   // Handle preferences requirement
-  if (!hasPreferences) {
+  if (!preference) {
     // If on preferences page, allow access
     if (window.location.pathname === '/preferences') {
       return children;
@@ -21,12 +19,16 @@ const ProtectedRoute = ({ children, requirePreferences = false }) => {
   }
 
   // If preferences are required but we're still on preferences page, redirect to dashboard
-  if (hasPreferences && window.location.pathname === '/preferences') {
-    return <Navigate to="/dashboard" replace />;
+  if (preference && window.location.pathname === '/preferences') {
+   if(userData?.role =="admin"){
+      return <Navigate to="/admin/dashboard" replace />;
+   }else if(userData?.role=="user"){
+      return <Navigate to="/dashboard" replace />;
+   }
   }
 
   // If preferences are required and we have them, or if preferences aren't required
-  if ((requirePreferences && hasPreferences) || !requirePreferences) {
+  if ((requirePreferences && preference) || !requirePreferences) {
     return children;
   }
 

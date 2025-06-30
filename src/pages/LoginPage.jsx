@@ -10,10 +10,13 @@ import { API_URL } from '../../API_URL';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
+
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { user, login } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [ginloading, setgintLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -29,25 +32,30 @@ const LoginPage = () => {
 
   const onGoogleLoginClick = async () => {
     try {
+      setgintLoading(true);
       const response = await handleGoogleLogin();
       toast.success(response.message);
-      login({ token: response.token });
-      navigate('/');
+      login({ token: response.token,role:response.role ,isLanding:response.landing});
+      
     } catch (err) {
       const errorMsg = err.response?.data?.message || err.message || "Google Sign-In failed!";
       toast.error(errorMsg);
+    }finally{
+      setgintLoading(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      setLoading(true);
       const response = await axios.post(`${API_URL}/users/login`, formData);
+      login({ token: response.data.token,role:response.data.role ,isLanding:response.data.landing });
       toast.success(response.data.message || "Login successful!");
-      login({ token: response.data.token });
-      navigate('/');
     } catch (error) {
       toast.error(error.response?.data?.message || "Login Failed!");
+    }finally{
+      setLoading(false);
     }
   };
  
@@ -141,25 +149,42 @@ const LoginPage = () => {
                     <button type="button" onClick={() => setShowPassword(prev => !prev)} className=" right-3 transform cursor-pointer hover:text-gray-900 -translate-y-1/2 text-sm text-gray-600 focus:outline-none">
                     {showPassword ? 'Hide Password' : 'Show Password'}
                     </button>
-
-                    <div className="pt-4">
+                    {loading ?<div className="pt-4">
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
+                        disabled
                         type="submit"
-                        className="w-full flex justify-center py-2 px-4 border cursor-pointer border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-stone-700 hover:bg-stone-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        className="w-full flex justify-center py-2 px-4 border cursor-not-allowed border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-stone-700 hover:bg-stone-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                       >
-                        Login
+                        Login...
                       </motion.button>
-                    </div>
+                    </div>:
+                      <div className="pt-4">
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          type="submit"
+                          className="w-full flex justify-center py-2 px-4 border cursor-pointer border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-stone-700 hover:bg-stone-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                          Login
+                        </motion.button>
+                      </div>}
+                    
                   </form>
-                  <button onClick={onGoogleLoginClick} className="flex my-4 cursor-pointer bg-white items-center justify-center gap-2 border border-gray-300 rounded-lg px-4 py-2 shadow-sm hover:shadow-md  transition duration-200 w-full">
+                  {ginloading ?<button onClick={onGoogleLoginClick} disabled className="flex my-4 cursor-not-allowed bg-white items-center justify-center gap-2 border border-gray-300 rounded-lg px-4 py-2 shadow-sm hover:shadow-md  transition duration-200 w-full">
+                    <FcGoogle className="w-5 h-5" />
+                    <span className="text-sm font-medium text-gray-700">
+                      Sign in with Google ...
+                    </span>
+                  </button>:
+                    <button onClick={onGoogleLoginClick} className="flex my-4 cursor-pointer bg-white items-center justify-center gap-2 border border-gray-300 rounded-lg px-4 py-2 shadow-sm hover:shadow-md  transition duration-200 w-full">
                       <FcGoogle className="w-5 h-5" />
                       <span className="text-sm font-medium text-gray-700">
                         Sign in with Google
                       </span>
-                   </button>
-
+                    </button>
+                                    }
                   <div className="mt-8 text-center">
                     <p className="text-sm text-gray-600 font-serif">
                       Don't have an account?{' '}

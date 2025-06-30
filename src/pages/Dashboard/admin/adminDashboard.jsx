@@ -48,7 +48,7 @@ const AdminDashboard = () => {
   const adminActions = [
     { label: "Manage Books", icon: <FaBook />, link: "/admin/dashboard/managebook" },
     { label: "Manage Users", icon: <FaUsers />, link: "/admin/dashboard/manageuser" },
-    { label: "Moderate Reviews", icon: <FaCommentAlt />, link: "/admin/reviews" },
+    { label: "Moderate Reviews", icon: <FaCommentAlt />, link: "/admin/dashboard/reviewmoderation" },
     { label: "Notifications", icon: <FaBell />, link: "/admin/dashboard/notification" },
     { label: "View Reports & Logs", icon: <FaChartLine />, link: "/admin/reports" },
     { label: "Reading Lists", icon: <FaListAlt />, link: "/admin/reading-lists" },
@@ -63,11 +63,70 @@ const AdminDashboard = () => {
         <p className="text-gray-600 mt-1">Welcome back, {userData?.name }</p>
 
         {/* Stats Section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-          <StatCard icon={<FaUsers />} label="Total Users" value={loading ? "..." : stats.totalUsers} />
-          <StatCard icon={<FaBook />} label="Total Books" value={loading ? "..." : stats.totalBooks} />
-          <StatCard icon={<FaCommentAlt />} label="Total Reviews" value={loading ? "..." : stats.totalReviews} />
-          <StatCard icon={<FaListAlt />} label="Reading Lists Created" value={loading ? "..." : stats.totalReadingLists} />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8"><StatCard
+          icon={<FaUsers />}
+          label="Total Users"
+          value={
+            loading ? (
+              <span className="inline-flex gap-[2px]">
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></span>
+              </span>
+            ) : (
+              stats.totalUsers
+            )
+          }
+        />
+        
+        <StatCard
+          icon={<FaBook />}
+          label="Total Books"
+          value={
+            loading ? (
+              <span className="inline-flex gap-[2px]">
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></span>
+              </span>
+            ) : (
+              stats.totalBooks
+            )
+          }
+        />
+        
+        <StatCard
+          icon={<FaCommentAlt />}
+          label="Total Reviews"
+          value={
+            loading ? (
+              <span className="inline-flex gap-[2px]">
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></span>
+              </span>
+            ) : (
+              stats.totalReviews
+            )
+          }
+        />
+        
+        <StatCard
+          icon={<FaListAlt />}
+          label="Reading Lists Created"
+          value={
+            loading ? (
+              <span className="inline-flex gap-[2px]">
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></span>
+              </span>
+            ) : (
+              stats.totalReadingLists
+            )
+          }
+        />
+
         </div>
 
         {/* Admin Action Links */}

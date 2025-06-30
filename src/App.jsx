@@ -25,6 +25,8 @@ import ManageUsers from "./pages/Dashboard/admin/manageUser";
 import NotificationsPage from "./pages/Dashboard/admin/notification";
 import NotificationDetailPage from "./pages/Dashboard/admin/notificationDetail";
 import BookManagement from "./pages/Dashboard/admin/bookManagement";
+import ReviewModerationPage from "./pages/Dashboard/admin/reviewModerate";
+
 
 
 function App() {
@@ -80,6 +82,13 @@ function App() {
                 <NotificationDetailPage/>
               </ProtectedRoute>
             }/>
+            
+            <Route path="/admin/dashboard/reviewmoderation" element={
+              <ProtectedRoute>
+                <ReviewModerationPage />
+              </ProtectedRoute>
+            } />
+            
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <UserDashboard />
@@ -90,6 +99,7 @@ function App() {
                 <ReadingListPage />
               </ProtectedRoute>
             } />
+            
             
             <Route path="/upload/book" element={
               <ProtectedRoute>

@@ -2,106 +2,42 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { API_URL } from "../../../../API_URL";
-import { FaEdit, FaTrash, FaPlusCircle, FaSearch } from "react-icons/fa";
+import { FaEdit,FaSyncAlt, FaTrash, FaPlusCircle, FaSearch } from "react-icons/fa";
 
-// Mock data to simulate an API response. Replace this with a real API call.
-const mockBooks = [
-  {
-    _id: "1",
-    title: "To Kill a Mockingbird",
-    author: "Harper Lee",
-    genre: "Classic",
-    status: "Active",
-    coverImage: "https://via.placeholder.com/40x60?text=Book1",
-  },
-  {
-    _id: "2",
-    title: "1984",
-    author: "George Orwell",
-    genre: "Dystopian",
-    status: "Active",
-    coverImage: "https://via.placeholder.com/40x60?text=Book2",
-  },
-  {
-    _id: "3",
-    title: "The Great Gatsby",
-    author: "F. Scott Fitzgerald",
-    genre: "Classic",
-    status: "Inactive",
-    coverImage: "https://via.placeholder.com/40x60?text=Book3",
-  },
-  {
-    _id: "4",
-    title: "Dune",
-    author: "Frank Herbert",
-    genre: "Sci-Fi",
-    status: "Active",
-    coverImage: "https://via.placeholder.com/40x60?text=Book4",
-  },
-    {
-    _id: "5",
-    title: "The Hobbit",
-    author: "J.R.R. Tolkien",
-    genre: "Fantasy",
-    status: "Pending Approval",
-    coverImage: "https://via.placeholder.com/40x60?text=Book5",
-  },
-];
+
 
 const BookManagement = () => {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
 
-  useEffect(() => {
-    const fetchBooks = async () => {
+  const fetchBooks = async () => {
       setLoading(true);
       setError(null);
       try {
-        // In a real application, you would make an API call like this:
-        // const token = localStorage.getItem("NR_token");
-        // const response = await axios.get(`${API_URL}/admin/books`, {
-        //   headers: { Authorization: `Bearer ${token}` },
-        // });
-        // setBooks(response.data);
-
-        // For demonstration, we'll use mock data with a delay.
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setBooks(mockBooks);
-
-      } catch (error) {
-        console.error("Failed to fetch books:", error);
+        const token = localStorage.getItem("NR_token");
+        const response = await axios.get(`${API_URL}/admin/books`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setBooks(response.data.books);
+      } catch (err) {
+        console.error("Failed to fetch books:", err);
         setError("Failed to load book data. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
-    fetchBooks();
-  }, []);
+  
+    useEffect(() => {
+      fetchBooks();
+    }, []);
 
   const handleBookDelete = (bookId) => {
-    // Implement delete functionality
     console.log("Delete book with ID:", bookId);
-    alert(`In a real app, this would delete book ${bookId}`);
-    // Example: setBooks(books.filter(b => b._id !== bookId));
   };
 
-  const filteredBooks = useMemo(() => {
-    return books
-      .filter((book) => {
-        if (statusFilter === "All") return true;
-        return book.status === statusFilter;
-      })
-      .filter((book) => {
-        return (
-          book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          book.author.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-      });
-  }, [books, searchTerm, statusFilter]);
-
+ 
   return (
     <div className="pt-20 pl-10 md:px-10 lg:px-24 xl:px-32 max-w-screen-xl mx-auto">
       <div className="p-6">
@@ -131,24 +67,18 @@ const BookManagement = () => {
               value={searchTerm}
             />
           </div>
-          <div>
-            <select
-              className="p-2 border rounded-lg"
-              onChange={(e) => setStatusFilter(e.target.value)}
-              value={statusFilter}
-            >
-              <option value="All">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-              <option value="Pending Approval">Pending Approval</option>
-            </select>
-          </div>
+          <button onClick={fetchBooks} className="p-2 text-gray-600 hover:text-black">
+            <FaSyncAlt className="w-5 h-5 " />
+          </button>
+
         </div>
 
         {/* Books Table */}
         <div className="bg-white rounded-xl shadow overflow-x-auto">
           {loading ? (
-            <div className="text-center p-8">Loading books...</div>
+            <div className="flex justify-center items-center p-2 ">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+            </div>
           ) : error ? (
             <div className="text-center p-8 text-red-500">{error}</div>
           ) : (
@@ -164,15 +94,15 @@ const BookManagement = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredBooks.length > 0 ? (
-                  filteredBooks.map((book) => (
-                    <tr key={book._id}>
+                {books.length > 0 ? (
+                  books.map((book) => (
+                    <tr key={book.bookId}>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <img src={book.coverImage} alt={book.title} className="w-10 h-15 object-cover rounded"/>
+                        <img src={book.coverImage} alt={book.Title} className="w-10 h-15 object-cover rounded"/>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{book.title}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">{book.author}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">{book.genre}</td>
+                      <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{book.Title}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">{book.Author}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">{book.Genre}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                           book.status === 'Active' ? 'bg-green-100 text-green-800' :
@@ -182,10 +112,10 @@ const BookManagement = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <Link to={`/admin/books/edit/${book._id}`} className="text-blue-600 hover:text-blue-900 mr-4">
+                        <Link to={`/admin/books/edit/${book.bookId}`} className="text-blue-600 hover:text-blue-900 mr-4">
                           <FaEdit size={18}/>
                         </Link>
-                        <button onClick={() => handleBookDelete(book._id)} className="text-red-600 hover:text-red-900">
+                        <button onClick={() => handleBookDelete(book.bookId)} className="text-red-600 hover:text-red-900">
                           <FaTrash size={18}/>
                         </button>
                       </td>

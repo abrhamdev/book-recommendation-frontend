@@ -18,7 +18,7 @@ const AboutUs = () => {
   const features = [
     {
       title: 'Personalized Recommendations',
-      description: 'Our hybrid-based filtering algorithm tailors book suggestions to your unique preferences.',
+      description: 'Our filtering algorithm tailors book suggestions to your unique preferences.',
     },
     {
       title: 'Community Features',

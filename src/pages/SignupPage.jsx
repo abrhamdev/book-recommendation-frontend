@@ -11,6 +11,7 @@ import { handleGoogleLogin } from '../utils/firebase';
 import {motion} from 'framer-motion';
 import { toast } from 'react-toastify';
 import { API_URL } from '../../API_URL';
+import { useAuth } from '../context/AuthContext';
 
 const signupSchema = yup.object().shape({
   fullName: yup.string().min(3, 'Full Name must be at least 3 characters').required('Full name is required'),
@@ -28,38 +29,50 @@ const signupSchema = yup.object().shape({
 });
 
 const SignupPage = () => {
+  const [signupLoading, setSignUpLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const {login } = useAuth();
+  const [ginloading, setgintLoading] = useState(false);
  const navigate=useNavigate();
   const {
     register,
     handleSubmit,
     formState: { errors },
+    reset,
   } = useForm({
     resolver: yupResolver(signupSchema),
   });
 
   const onSubmit = async (data) => {
     try {
+      setSignUpLoading(true);
      /* toast(`Verify Your Email! We have sent Verification link to ${data.email}`,{
         autoClose:5000,
       });*/
       
       const response = await axios.post(`${API_URL}/users/signup`, data);
+      reset(); 
       toast.success( response.data.message);
       
     } catch (error) {
       toast.error(error.response?.data.message || error.message);
+    }finally{
+      setSignUpLoading(false);
     }
   };
 
   const onGoogleLoginClick = async () => {
     try {
+      setgintLoading(true);
       const response = await handleGoogleLogin();
-      toast.success(response.message || "Login successfull!");
-      navigate('/');
+      toast.success(response.message);
+      login({ token: response.token,role:response.role ,isLanding:response.landing});
+      
     } catch (err) {
-      const errorMsg = err.response?.data?.message || err.message || "Login failed!";
+      const errorMsg = err.response?.data?.message || err.message || "Google Sign-In failed!";
       toast.error(errorMsg);
+    }finally{
+      setgintLoading(false);
     }
   };
 
@@ -177,6 +190,13 @@ const SignupPage = () => {
                     {showPassword ? 'Hide Password' : 'Show Password'}
                   </button>
                   </div>
+                  {signupLoading?<button
+                    type="submit"
+                    disabled
+                    className="w-full flex justify-center py-1.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-stone-700 hover:bg-stone-500 cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    Sign Up ...
+                  </button>:
                     <motion.button
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.98 }}
@@ -185,15 +205,21 @@ const SignupPage = () => {
                     >
                       Sign Up
                     </motion.button>
-                    
+                  }
                   </form>
+                  {signupLoading?<button onClick={onGoogleLoginClick} className="flex my-4 cursor-not-allowed bg-white items-center justify-center gap-2 border border-gray-300 rounded-lg px-4 py-2 shadow-sm hover:shadow-md  transition duration-200 w-full">
+                      <FcGoogle className="w-5 h-5" />
+                      <span className="text-sm font-medium text-gray-700">
+                        Sign in with Google ...
+                      </span>
+                   </button>:
                   <button onClick={onGoogleLoginClick} className="flex my-4 cursor-pointer bg-white items-center justify-center gap-2 border border-gray-300 rounded-lg px-4 py-2 shadow-sm hover:shadow-md  transition duration-200 w-full">
                       <FcGoogle className="w-5 h-5" />
                       <span className="text-sm font-medium text-gray-700">
                         Sign in with Google
                       </span>
                    </button>
-
+                  }
                   <div className="mt-4 text-center">
                     <p className="text-sm text-gray-600 font-serif">
                       Already have an account?{' '}

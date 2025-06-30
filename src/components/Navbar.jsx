@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useState,useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MagnifyingGlassIcon, Bars3Icon, XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,8 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 
 const Navbar = () => {
-  const { i18n } = useTranslation();
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const navigate = useNavigate();
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -21,76 +20,68 @@ const Navbar = () => {
   const [user, setUser] = useState(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
-  
 
- 
-
-  // Outside click handler
+  // Outside click handler for profile dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
-        setIsProfileOpen(false)
+        setIsProfileOpen(false);
       }
-    }
+    };
 
-    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [])
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
-
-  const handleLogout=()=>{
-      localStorage.removeItem('NR_token');
-      navigate('/');
-  }
+  const handleLogout = () => {
+    localStorage.removeItem('NR_token');
+    setUser(null);
+    navigate('/');
+    toast.success(t('navbar.signOut'));
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("NR_token");
     if (!token) return;
+
     const getUser = async () => {
-  try{
-    const response =await axios.post(`${API_URL}/users/me`,{}, {
-      headers: {
-         Authorization: `Bearer ${token}`,
-         }
-    })
-    
-      setUser(response.data.user);
-    
-  }catch(error){
-      toast.error(error.response?.data.message)
-      setUser(null);
-    }}
+      try {
+        const response = await axios.post(`${API_URL}/users/me`, {}, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setUser(response.data.user);
+      } catch (error) {
+        toast.error(error.response?.data.message);
+        setUser(null);
+      }
+    };
     getUser();
   }, []);
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
-      setSearchResults([]); 
+      setSearchResults([]);
       return;
     }
-  
+
     const timeoutId = setTimeout(async () => {
       setLoading(true);
       try {
-        const response = await axios.get(
-          `${API_URL}/books/search?q=${ searchQuery }`);
+        const response = await axios.get(`${API_URL}/books/search?q=${searchQuery}`);
         setSearchResults(response.data.items || []);
       } catch (error) {
         console.error(error);
       } finally {
         setLoading(false);
       }
-    }, 500); 
-  
+    }, 500);
+
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
-
-  useEffect(() => {
-  // This forces re-render when language changes
-}, [i18n.language]);
-
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -101,46 +92,46 @@ const Navbar = () => {
   };
 
   const menuItems = [
-    localStorage?.getItem("NR_token") ? {}:{ title: 'Home', path: '/'},
-    { 
-      title: 'Discover', 
+    !user ? { title: t('navbar.home'), path: '/' } : {},
+    {
+      title: t('navbar.discover'),
       path: '/books',
       dropdown: [
-        { title: 'Art', path: '/discover?genre=art' },
-        { title: 'Biography', path: '/discover?genre=biography' },
-        { title: 'Business', path: '/discover?genre=business' },
-        { title: "Children's", path: '/discover?genre=children' },
-        { title: 'Christian', path: '/discover?genre=christian' },
-        { title: 'Classics', path: '/discover?genre=classics' },
-        { title: 'Comics', path: '/discover?genre=comics' },
-        { title: 'Cookbooks', path: '/discover?genre=cookbooks' },
-        { title: 'Fantasy', path: '/discover?genre=fantasy' },
-        { title: 'Fiction', path: '/discover?genre=fiction' },
-        { title: 'Graphic Novels', path: '/discover?genre=graphic-novels' },
-        { title: 'Historical Fiction', path: '/discover?genre=historical-fiction' },
-        { title: 'History', path: '/discover?genre=history' },
-        { title: 'Horror', path: '/discover?genre=horror' },
-        { title: 'Humor', path: '/discover?genre=humor' },
-        { title: 'Manga', path: '/discover?genre=manga' },
-        { title: 'Memoir', path: '/discover?genre=memoir' },
-        { title: 'Music', path: '/discover?genre=music' },
-        { title: 'Mystery', path: '/discover?genre=mystery' },
-        { title: 'Nonfiction', path: '/discover?genre=nonfiction' },
-        { title: 'Poetry', path: '/discover?genre=poetry' },
-        { title: 'Psychology', path: '/discover?genre=psychology' },
-        { title: 'Romance', path: '/discover?genre=romance' },
-        { title: 'Science', path: '/discover?genre=science' },
-        { title: 'Science Fiction', path: '/discover?genre=science-fiction' },
-        { title: 'Self Help', path: '/discover?genre=self-help' },
-        { title: 'Sports', path: '/discover?genre=sports' },
-        { title: 'Thriller', path: '/discover?genre=thriller' },
-        { title: 'Travel', path: '/discover?genre=travel' },
-        { title: 'Young Adult', path: '/discover?genre=young-adult' }
+        { title: t('navbar.allGenres.art'), path: '/discover?genre=art' },
+        { title: t('navbar.allGenres.biography'), path: '/discover?genre=biography' },
+        { title: t('navbar.allGenres.business'), path: '/discover?genre=business' },
+        { title: t('navbar.allGenres.children'), path: "/discover?genre=children" },
+        { title: t('navbar.allGenres.christian'), path: '/discover?genre=christian' },
+        { title: t('navbar.allGenres.classics'), path: '/discover?genre=classics' },
+        { title: t('navbar.allGenres.comics'), path: '/discover?genre=comics' },
+        { title: t('navbar.allGenres.cookbooks'), path: '/discover?genre=cookbooks' },
+        { title: t('navbar.allGenres.fantasy'), path: '/discover?genre=fantasy' },
+        { title: t('navbar.allGenres.fiction'), path: '/discover?genre=fiction' },
+        { title: t('navbar.allGenres.graphicNovels'), path: '/discover?genre=graphic-novels' },
+        { title: t('navbar.allGenres.historicalFiction'), path: '/discover?genre=historical-fiction' },
+        { title: t('navbar.allGenres.history'), path: '/discover?genre=history' },
+        { title: t('navbar.allGenres.horror'), path: '/discover?genre=horror' },
+        { title: t('navbar.allGenres.humor'), path: '/discover?genre=humor' },
+        { title: t('navbar.allGenres.manga'), path: '/discover?genre=manga' },
+        { title: t('navbar.allGenres.memoir'), path: '/discover?genre=memoir' },
+        { title: t('navbar.allGenres.music'), path: '/discover?genre=music' },
+        { title: t('navbar.allGenres.mystery'), path: '/discover?genre=mystery' },
+        { title: t('navbar.allGenres.nonfiction'), path: '/discover?genre=nonfiction' },
+        { title: t('navbar.allGenres.poetry'), path: '/discover?genre=poetry' },
+        { title: t('navbar.allGenres.psychology'), path: '/discover?genre=psychology' },
+        { title: t('navbar.allGenres.romance'), path: '/discover?genre=romance' },
+        { title: t('navbar.allGenres.science'), path: '/discover?genre=science' },
+        { title: t('navbar.allGenres.scienceFiction'), path: '/discover?genre=science-fiction' },
+        { title: t('navbar.allGenres.selfHelp'), path: '/discover?genre=self-help' },
+        { title: t('navbar.allGenres.sports'), path: '/discover?genre=sports' },
+        { title: t('navbar.allGenres.thriller'), path: '/discover?genre=thriller' },
+        { title: t('navbar.allGenres.travel'), path: '/discover?genre=travel' },
+        { title: t('navbar.allGenres.youngAdult'), path: '/discover?genre=young-adult' }
       ]
     },
-    { title: 'Community', path: '/community/bookclub' },
-    { title: 'About Us', path: '/aboutus' }
-  ];
+    { title: t('navbar.community'), path: '/community/bookclub' },
+    { title: t('navbar.about'), path: '/aboutus' }
+  ].filter(item => item.title);
 
   return (
     <nav className="bg-white shadow-sm fixed w-full z-50">
@@ -149,14 +140,14 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link to="/" className="sm:pl-8 pl-10 text-2xl font-bold text-indigo-600 hover:text-indigo-500 transition-colors">
-              NovaReads
+              {t('navbar.logo')}
             </Link>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center justify-center flex-1">
             <div className="flex space-x-8">
-              {menuItems.map((item,index) => (
+              {menuItems.map((item, index) => (
                 <div key={`${item.path}-${index}`} className="relative group">
                   {item.dropdown ? (
                     <>
@@ -180,7 +171,7 @@ const Navbar = () => {
                             onMouseLeave={() => setIsDiscoverOpen(false)}
                           >
                             <div className="px-2 py-1 border-b border-gray-200">
-                              <h3 className="text-sm font-semibold text-gray-800">Genres</h3>
+                              <h3 className="text-sm font-semibold text-gray-800">{t('navbar.genresHeader')}</h3>
                             </div>
                             <div className="grid grid-cols-3 gap-1 p-2">
                               {item.dropdown.map((genre) => (
@@ -205,8 +196,8 @@ const Navbar = () => {
                       {item.title}
                       <motion.div
                         className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600"
-                        initial={{ scale: 0 }}
-                        whileHover={{ scale: 1 }}
+                        initial={{ scaleX: 0 }}
+                        whileHover={{ scaleX: 1 }}
                         transition={{ duration: 0.2 }}
                       />
                     </Link>
@@ -216,9 +207,13 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Right Side - Search and Login */}
+          {/* Right Side - Search, Auth, and Language */}
           <div className="flex items-center space-x-4">
-            {user?.role=="admin"?<Link to='/upload/book' className='text-indigo-600 hover:underline'>Quick Book Add</Link>:null}
+            {user?.role === "admin" && (
+              <Link to='/upload/book' className='text-indigo-600 hover:underline text-sm font-medium'>
+                {t('navbar.quickBookAdd')}
+              </Link>
+            )}
             {/* Search Component */}
             <div className="relative flex items-center">
               <motion.button
@@ -229,7 +224,6 @@ const Navbar = () => {
               >
                 <MagnifyingGlassIcon className="h-5 w-5" />
               </motion.button>
-              
               <AnimatePresence>
                 {isSearchOpen && (
                   <motion.div
@@ -237,37 +231,37 @@ const Navbar = () => {
                     animate={{ width: "200px", opacity: 1, x: 0 }}
                     exit={{ width: 0, opacity: 0, x: 20 }}
                     transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="absolute right-8 top-0 bg-white "
+                    className="absolute right-8 top-0 bg-white"
                   >
                     <form onSubmit={handleSearch}>
                       <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search books..."
+                        placeholder={t('navbar.searchPlaceholder')}
                         className="w-full px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                       />
                     </form>
-                    {loading ? <div className=" p-4 absolute mt-2 w-80 bg-white shadow-lg rounded-lg z-20 max-h-60 overflow-y-auto border border-gray-200">Loading...</div> : searchResults.length > 0 && (
-                         <div className="absolute mt-2 w-80 bg-white shadow-lg rounded-lg z-20 max-h-60 overflow-y-auto border border-gray-200">
-                           {searchResults.map((book,index) => (
-                            <Link onClick={()=>setSearchQuery('')} to={`/book/${book.id}`} key={`${book.id}-${index}`}>
-                             <div
-                               
-                               className="flex items-center gap-3 p-2 hover:bg-gray-100 cursor-pointer"
-                             >
-                               <img
-                                 src={book.volumeInfo.imageLinks?.thumbnail}
-                                 alt="cover"
-                                 className="w-10 h-14 object-cover rounded"
-                               />
-                               <span className="text-sm">{book.volumeInfo.title}</span>
-                             </div>
-                             </Link>
-                           ))}
-                         </div>
-                         
-                       )}
+                    {loading ? (
+                      <div className="p-4 absolute mt-2 w-80 bg-white shadow-lg rounded-lg z-20 max-h-60 overflow-y-auto border border-gray-200">
+                        {t('navbar.loading')}
+                      </div>
+                    ) : searchResults.length > 0 && (
+                      <div className="absolute mt-2 w-80 bg-white shadow-lg rounded-lg z-20 max-h-60 overflow-y-auto border border-gray-200">
+                        {searchResults.map((book, index) => (
+                          <Link onClick={() => setSearchQuery('')} to={`/book/${book.id}`} key={`${book.id}-${index}`}>
+                            <div className="flex items-center gap-3 p-2 hover:bg-gray-100 cursor-pointer">
+                              <img
+                                src={book.volumeInfo.imageLinks?.thumbnail}
+                                alt="cover"
+                                className="w-10 h-14 object-cover rounded"
+                              />
+                              <span className="text-sm">{book.volumeInfo.title}</span>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -278,10 +272,10 @@ const Navbar = () => {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="relative flex cursor-pointer"
+                  className="relative flex items-center cursor-pointer"
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                 >
-                  <span className="sr-only">View profile</span>
+                  <span className="sr-only">{t('navbar.viewProfile')}</span>
                   <img
                     className="h-6 w-6 rounded-full"
                     src={user.profile_picture || `https://ui-avatars.com/api/?name=${user.name}&background=random`}
@@ -289,7 +283,6 @@ const Navbar = () => {
                   />
                   <p className='px-2 overflow-hidden hidden md:block'>{user.name}</p>
                 </motion.button>
-
                 <AnimatePresence>
                   {isProfileOpen && (
                     <motion.div
@@ -307,14 +300,15 @@ const Navbar = () => {
                         <Link
                           to="/dashboard/settings"
                           className="block px-4 py-1 text-xs text-gray-700 hover:bg-gray-100 hover:text-indigo-600"
+                          onClick={() => setIsProfileOpen(false)}
                         >
-                          Profile Settings
+                          {t('navbar.profileSettings')}
                         </Link>
                         <button
                           onClick={handleLogout}
                           className="block w-full text-left px-4 py-1 text-xs text-red-600 hover:bg-gray-100"
                         >
-                          Sign Out
+                          {t('navbar.signOut')}
                         </button>
                       </div>
                     </motion.div>
@@ -327,18 +321,18 @@ const Navbar = () => {
                   to="/login"
                   className="text-xs font-medium text-gray-700 hover:text-indigo-600 transition-colors"
                 >
-                  Sign In
+                  {t('navbar.signIn')}
                 </Link>
-                <select 
-                onChange={(e) => i18n.changeLanguage(e.target.value)}
-                value={i18n.language}
-                className="text-xs font-medium text-gray-700 hover:text-indigo-600 bg-transparent border-none focus:ring-0 cursor-pointer"
-              >
-                <option value="en">EN</option>
-                <option value="am">አማ</option>
-              </select>
-            </div>
+              </div>
             )}
+             <select
+                  onChange={(e) => i18n.changeLanguage(e.target.value)}
+                  value={i18n.language}
+                  className="text-xs font-medium text-gray-700 hover:text-indigo-600 bg-transparent border-none focus:ring-0 cursor-pointer"
+                >
+                  <option value="en">EN</option>
+                  <option value="am">አማ</option>
+             </select>
 
             {/* Mobile Menu Button */}
             <div className="md:hidden">
@@ -388,7 +382,6 @@ const Navbar = () => {
                               exit={{ opacity: 0, height: 0 }}
                               transition={{ duration: 0.2 }}
                               className="pl-4 space-y-1 overflow-y-auto max-h-screen"
-                              
                             >
                               {item.dropdown.map((genre) => (
                                 <Link
@@ -415,7 +408,6 @@ const Navbar = () => {
                     )}
                   </div>
                 ))}
-                
               </div>
             </motion.div>
           )}
@@ -425,4 +417,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar; 
+export default Navbar;

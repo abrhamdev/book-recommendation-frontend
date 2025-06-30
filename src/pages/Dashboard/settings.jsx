@@ -36,7 +36,7 @@ const ProfileSettings = () => {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [user,setUser]=useState();
-<<<<<<< Updated upstream
+
   const [preference, setPreference] = useState(null);
   const [editPreferenceMode, setEditPreferenceMode] = useState(false);
   const [profileFormData, setProfileFormData] = useState({
@@ -46,7 +46,7 @@ const ProfileSettings = () => {
       location: '',
     });
   const fileInputRef = useRef(null);
-=======
+
 
   const setTheme = (theme) => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -56,7 +56,7 @@ const ProfileSettings = () => {
   const getCurrentTheme = () => {
     return localStorage.getItem('theme') || 'light';
   };
->>>>>>> Stashed changes
+
   
     const handleEditClick = () => {
       fileInputRef.current.click();
@@ -658,14 +658,12 @@ const ProfileSettings = () => {
                           </p>
                         </div>
                       </div>
-                      {user?.auth_provider === 'local' && (
                         <button
                           onClick={() => setSecurityAction('password')}
                           className="ml-4 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                         >
                           Change
                         </button>
-                      )}
                     </div>
                   </div>
 

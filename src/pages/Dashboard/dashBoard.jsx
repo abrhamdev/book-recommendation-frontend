@@ -11,6 +11,8 @@ import { useAuth } from '../../context/AuthContext';
 const UserDashboard = () => {
   
   const [recommendations, setRecommendations] = useState([]);
+  const [readingList, setReadingList] = useState(null);
+  const [readingListLoading, setreadingListLoading] = useState(null);
   const [loading, setLoading] = useState(false);
   const { userData } = useAuth();
   
@@ -39,38 +41,52 @@ const UserDashboard = () => {
         fetchRecommendations();
       }, []);
 
-  // Sample data – replace with real data from API
-  const user = {
-    name: 'user name',
-    stats: {
-      booksRead: 25,
-      readingList: 8,
-      reviewsWritten: 12,
-      hoursSpent: 73,
-    },
-   
-  };
+      const fetchReadingListCount = async () => {
+        const token = localStorage.getItem("NR_token");
+        setreadingListLoading(true);
+        try {
+          const response = await axios.get(
+            `${API_URL}/books/reading-list`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          console.log(response.data);
+          setReadingList(response?.data.length);
+        } catch (error) {
+          toast.error(error?.response?.data?.error || "Failed to fetch recommendations");
+        } finally {
+             setreadingListLoading(false);
+           }
+      };
+      // Fetch reading list stat
+        useEffect(() => {
+          fetchReadingListCount();
+        }, []);
 
   return (
     <div className="pt-20 pl-10 md:px-10 lg:px-24 xl:px-32 max-w-screen-xl mx-auto">
     <div className="p-6">
       {/* Welcome */}
-      <h1 className="text-3xl font-bold mb-4">Welcome back, {userData?.name}</h1>
+      {userData.role=='admin'?null:<h1 className="text-3xl font-bold mb-4">Welcome back, {userData?.name}</h1>}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <StatCard icon={<FaBook />} label="Books Read" value={user.stats.booksRead} />
-        <Link to="/dashboard/readinglist"><StatCard icon={<FaListAlt />} label="Reading List" value={user.stats.readingList} /></Link>
-        <StatCard icon={<FaStar />} label="Reviews Written" value={user.stats.reviewsWritten} />
-        <StatCard icon={<FaClock />} label="Hours Spent" value={user.stats.hoursSpent} />
+        <StatCard icon={<FaBook />} label="Books Read" value={null} />
+        <Link to="/dashboard/readinglist"><StatCard icon={<FaListAlt />} label="Reading List" value={readingList} /></Link>
+        <StatCard icon={<FaStar />} label="Reviews Written" value={null} />
       </div>
 
       {/* Recommendations */}
             <div className="mb-8">
               <h2 className="text-2xl font-semibold mb-4">Recommended for You</h2>
               {loading ? (
-                <p>Loading recommendations...</p>
-              ) : recommendations.length === 0 ? (
+                <div className="flex justify-center items-center p-2 ">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+                </div>
+              ) : recommendations?.length === 0 ? (
                 <p>No recommendations found.</p>
               ) : (
                 <div className="grid sm:grid-cols-2 md:grid-cols-5 gap-4">

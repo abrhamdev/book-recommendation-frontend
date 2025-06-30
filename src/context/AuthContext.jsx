@@ -10,47 +10,42 @@ export const AuthProvider = ({ children }) => {
   const [userData, setUserData] = useState(null); //to be replace user state is we get time
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const token = localStorage.getItem("NR_token");
-    if (!token) return;
-    const getUser = async () => {
-  try{
-    const response =await axios.post(`${API_URL}/users/me`,{}, {
-      headers: {
-         Authorization: `Bearer ${token}`,
-         }
-    })
-      setUserData(response.data.user);
-  }catch(error){
-      setUserData(null);
-    }}
-    getUser();
-  }, []);
+//preferences
+  const [preference, setPreference] = useState(null);
+ 
   
   useEffect(() => {
     const initializeAuth = async () => {
       try {
         // Check for token in localStorage
-        const token = localStorage.getItem('NR_token');
-        const userPreferences = localStorage.getItem('userPreferences');
-        
+        const token = localStorage.getItem('NR_token');        
         if (token) {
           setUser({ token });
+          const fetchuser =await axios.post(`${API_URL}/users/me`,{}, {
+            headers: {
+               Authorization: `Bearer ${token}`,
+               }
+          })
+            setUserData(fetchuser.data.user);
+          
+          const response = await axios.post(`${API_URL}/users/me/fetchPreferences`,{}, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+          });
+          setPreference(response?.data);
           // If user hasn't set preferences, redirect to preferences page
-          if (!userPreferences && window.location.pathname !== '/preferences') {
+          if (!preference && window.location.pathname !== '/preferences') {
             navigate('/preferences');
           }
         } else {
           // If no token, ensure user state is cleared
           setUser(null);
-          localStorage.clear();
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
         // On any error, clear everything to be safe
         setUser(null);
-        localStorage.clear();
       } finally {
         setLoading(false);
       }
@@ -59,15 +54,23 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, [navigate]);
 
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem('NR_token', userData.token);
+  const login = (userDataparam) => {
+    setUser(userDataparam);
+    localStorage.setItem('NR_token', userDataparam.token);
     // Check if user has preferences
-    const hasPreferences = localStorage.getItem('userPreferences');
-    if (!hasPreferences) {
-      navigate('/preferences');
-    } else {
-      navigate('/dashboard');
+   // const hasPreferences = localStorage.getItem('userPreferences');
+    try{
+      if (userDataparam.isLanding) {
+        navigate('/preferences');
+      } else {
+        if(userDataparam.role=="admin"){
+          navigate('/admin/dashboard');
+        }else if(userDataparam.role=="user"){
+          navigate('/dashboard');
+        }
+      }
+    }catch(error){
+      console.log(error);
     }
   };
 
@@ -76,24 +79,28 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setLoading(false);
     
-    // Clear all stored data
-    localStorage.clear(); // This will remove all localStorage items
-    
     // Navigate to home page
     navigate('/', { replace: true });
   };
 
   const setPreferences = (preferences) => {
     localStorage.setItem('userPreferences', JSON.stringify(preferences));
-    navigate('/dashboard');
+    if(userData.role=="admin"){
+      navigate('/admin/dashboard');
+    }else{
+      navigate('/dashboard');
+    }
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="flex justify-center items-center h-screen w-screen">
+      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-500"></div>
+    </div>
+;
   }
 
   return (
-    <AuthContext.Provider value={{ userData,user, login, logout, setPreferences }}>
+    <AuthContext.Provider value={{ preference,userData,user, login, logout, setPreferences }}>
       {children}
     </AuthContext.Provider>
   );
