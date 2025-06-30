@@ -45,5 +45,126 @@
       "travel": "Travel",
       "youngAdult": "Young Adult"
     }
-  }
+  },
+  "homePage": {
+      "hero": {
+        "title": "Discover Your Next Literary Adventure",
+        "subtitle": "Personalized book recommendations, vibrant reading communities, and endless stories, crafted just for you.",
+        "cta": "Start Exploring"
+      },
+      "quoteOfTheDay": {
+        "title": "Quote of the Day"
+      },
+      "quotes": {
+         "quote1": "So many books, so little time.",
+         "author1": "Frank Zappa",
+         "quote2": "A reader lives a thousand lives before he dies. The man who never reads lives only one.",
+         "author2": "George R.R. Martin",
+         "quote3": "Books are a uniquely portable magic.",
+         "author3": "Stephen King",
+         "quote4": "The more that you read, the more things you will know. The more that you learn, the more places you'll go.",
+         "author4": "Dr. Seuss",
+         "quote5": "To learn to read is to light a fire; every syllable that is spelled out is a spark.",
+         "author5": "Victor Hugo"
+       },
+      "features": {
+        "title": "Why Readers Love NovaReads",
+        "personalized": {
+          "title": "Personalized Recommendations",
+          "description": "Our smart algorithms learn your unique tastes to suggest books you'll genuinely adore. Say goodbye to endless searching!"
+        },
+        "curated": {
+          "title": "Curated Reading Lists",
+          "description": "Effortlessly organize your literary journey. Track what you've read, want to read, and discover new categories."
+        },
+        "community": {
+          "title": "Engaging Book Clubs",
+          "description": "Connect with fellow bibliophiles! Join lively discussions, share insights, and form lasting literary friendships."
+        }
+      },
+      "howItWorks": {
+        "title": "Your Journey to Discovering Great Books",
+        "step1": {
+          "title": "Tell Us Your Taste",
+          "description": "Create your profile and let us know your favorite genres, authors, and what you've enjoyed reading before."
+        },
+        "step2": {
+          "title": "Get Personalized Picks",
+          "description": "Our AI analyzes your preferences to serve up a curated list of books tailored just for you."
+        },
+        "step3": {
+          "title": "Explore & Connect",
+          "description": "Dive into new stories, join discussions, write reviews, and share your discoveries with a vibrant community."
+        }
+      },
+      "trending": {
+        "title": "Currently Trending Titles",
+        "loading": "Loading amazing books...",
+        "error": "Failed to load trending books. Please try again later."
+      },
+      "authorSpotlight": {
+        "title": "Spotlight: {{name}}",
+        "name": "Stephen King",
+        "bio": "Stephen King is an American author known for horror, supernatural fiction, suspense, and fantasy novels.",
+        "notableWorks": "Notable Works:",
+        "discoverMore": "Discover More Authors",
+        "works": {
+          "work1": "The Shining",
+          "work2": "It",
+          "work3": "Misery"
+        }
+      },
+      "genres": {
+        "title": "Explore Books by Genre",
+        "viewAll": "View All Genres",
+        "descriptions": {
+          "fantasy": "Worlds of magic and mythical creatures.",
+          "scienceFiction": "Future technologies and interstellar adventures.",
+          "thriller": "Heart-pounding suspense and mystery.",
+          "romance": "Stories of love, passion, and relationships.",
+          "history": "Journey through the past and real-world events.",
+          "biography": "Inspiring lives and true stories."
+        }
+      },
+      "whyChooseUs": {
+        "title": "Your Ultimate Companion for the World of Books",
+        "discoveries": {
+          "title": "Intelligent Discoveries",
+          "description": "Leveraging cutting-edge AI, we go beyond basic genres to match you with books that truly resonate with your reading DNA."
+        },
+        "diversity": {
+          "title": "Diverse Literary Landscape",
+          "description": "Explore a vast collection spanning global bestsellers, niche independent authors, and everything in between."
+        },
+        "community": {
+          "title": "A Community That Cares",
+          "description": "Join a supportive network of passionate readers. Share reviews, recommend favorites, and deepen your appreciation for stories."
+        },
+        "tagline": "Your Reading Oasis"
+      },
+      "testimonials": {
+        "title": "Hear From Our Thriving Community"
+      },
+      "newsletter": {
+        "title": "Unlock More Stories in Your Inbox",
+        "subtitle": "Join our thriving community! Subscribe to our newsletter for exclusive book recommendations, author interviews, and the latest updates from NovaReads.",
+        "placeholder": "Enter your email address",
+        "cta": "Subscribe"
+      },
+      "footer": {
+            "tagline": "Your personalized gateway to the world of books. Discover, connect, and read more.",
+            "quickLinks": "Quick Links",
+            "features": "Explore Features",
+            "connect": "Connect With Us",
+            "copyright": "© {{year}} NovaReads. All rights reserved.",
+            "madeWithLove": "Made with ❤️ for book lovers everywhere.",
+            "privacy": "Privacy Policy",
+            "terms": "Terms of Service",
+            "contact": "Contact Us",
+            "bookRecs": "Book Recommendations",
+            "browseGenres": "Browse Genres",
+            "joinClubs": "Join Book Clubs",
+            "reviews": "Read & Write Reviews"
+          }
+    }
 }
