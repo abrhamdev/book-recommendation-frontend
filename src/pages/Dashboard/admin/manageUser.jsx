@@ -45,7 +45,7 @@ const ManageUsers = () => {
         
           <div className="flex-1 space-y-4">
             <h2 className="text-2xl font-bold">All Users</h2>
-            <div className="bg-white rounded-xl shadow p-4 max-h-[85vh] overflow-y-auto">
+            <div className="bg-white rounded-xl shadow p-4 max-h-[85vh] overflow-y-auto hide-scrollbar ">
               {loading ?  <div className="w-full flex justify-center" ><FaSpinner className="animate-spin text-4xl text-blue-600" /></div> :users?.map((user) => (
                 <div
                   key={user.id}
