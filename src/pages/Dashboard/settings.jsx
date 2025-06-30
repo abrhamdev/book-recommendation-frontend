@@ -2,6 +2,7 @@ import { useState,useEffect,useRef } from 'react';
 import { API_URL } from '../../../API_URL';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 import {
   languages,
   allGenreItems,
@@ -25,6 +26,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const ProfileSettings = () => {
+  const { i18n } = useTranslation();
   const [editMode, setEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
   const [securityAction, setSecurityAction] = useState(null);
@@ -34,6 +36,7 @@ const ProfileSettings = () => {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [user,setUser]=useState();
+<<<<<<< Updated upstream
   const [preference, setPreference] = useState(null);
   const [editPreferenceMode, setEditPreferenceMode] = useState(false);
   const [profileFormData, setProfileFormData] = useState({
@@ -43,6 +46,17 @@ const ProfileSettings = () => {
       location: '',
     });
   const fileInputRef = useRef(null);
+=======
+
+  const setTheme = (theme) => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  };
+
+  const getCurrentTheme = () => {
+    return localStorage.getItem('theme') || 'light';
+  };
+>>>>>>> Stashed changes
   
     const handleEditClick = () => {
       fileInputRef.current.click();
@@ -210,12 +224,49 @@ const ProfileSettings = () => {
     readingGoal: 24
   });
 
-  const handleChangePassword = (e) => {
-    e.preventDefault();
-    // Add password change logic here
-    console.log('Password changed');
+  const handleChangePassword = async (e) => {
+  e.preventDefault();
+  
+  // Client-side validation
+  if (newPassword.length < 8) {
+    toast.error("Password must be at least 8 characters");
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    toast.error("New passwords don't match");
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem("NR_token");
+    const response = await axios.post(
+      `${API_URL}/users/change-password`,
+      {
+        currentPassword,
+        newPassword
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    console.log("Password changed succesfully")
+    toast.success(response.data.message || "Password changed successfully");
     setSecurityAction(null);
-  };
+    // Clear form fields
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+  } catch (error) {
+    console.error("Password change failed:", error);
+    toast.error(
+      error.response?.data?.message || 
+      "Failed to change password. Please try again."
+    );
+  }
+};
 
   const handleRemoveDevice = (deviceId) => {
     setDevices(devices.filter(device => device.id !== deviceId));
@@ -761,7 +812,7 @@ const ProfileSettings = () => {
                 </div>
 
                 {/* Reading Preferences */}
-                <div>
+              <div>
                   <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
                     <BookOpenIcon className="h-5 w-5 mr-2 text-gray-500" />
                     Reading Preferences
@@ -862,32 +913,45 @@ const ProfileSettings = () => {
                         <label className="block text-sm font-medium text-gray-700">
                           Theme
                         </label>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-s">
                           Choose your preferred color scheme
                         </p>
                       </div>
                       <div className="flex space-x-2">
                         <button
-                          className={`p-2 rounded-md cursor-pointer ${preferences.theme === 'light' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500'}`}
-                          onClick={() => setPreferences({...preferences, theme: 'light'})}
+                          className={`btn btn-sm btn-ghost ${document.documentElement.getAttribute('data-theme') === 'light' ? 'btn-active' : ''}`}
+                          onClick={() => {
+                            document.documentElement.setAttribute('data-theme', 'light');
+                            localStorage.setItem('theme', 'light');
+                          }}
+                          title="Light mode"
                         >
-                          <SunIcon className="h-5 w-5" />
+                          <SunIcon className="h-5 w-5 hover:cursor-pointer" />
                         </button>
                         <button
-                          className={`p-2 rounded-md cursor-pointer ${preferences.theme === 'dark' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500'}`}
-                          onClick={() => setPreferences({...preferences, theme: 'dark'})}
+                          className={`btn btn-sm btn-ghost ${document.documentElement.getAttribute('data-theme') === 'dark' ? 'btn-active' : ''}`}
+                          onClick={() => {
+                            document.documentElement.setAttribute('data-theme', 'dark');
+                            localStorage.setItem('theme', 'dark');
+                          }}
+                          title="Dark mode"
                         >
-                          <MoonIcon className="h-5 w-5" />
+                          <MoonIcon className="h-5 w-5 hover:cursor-pointer" />
                         </button>
                         <button
-                          className={`p-2 rounded-md cursor-pointer ${preferences.theme === 'system' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-500'}`}
-                          onClick={() => setPreferences({...preferences, theme: 'system'})}
+                          className={`btn btn-sm btn-ghost ${localStorage.getItem('theme') === 'system' ? 'btn-active' : ''}`}
+                          onClick={() => {
+                            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                            document.documentElement.setAttribute('data-theme', systemTheme);
+                            localStorage.setItem('theme', 'system');
+                          }}
+                          title="System preference"
                         >
-                          <ComputerDesktopIcon className="h-5 w-5" />
+                          <ComputerDesktopIcon className="h-5 w-5 hover:cursor-pointer" />
                         </button>
                       </div>
                     </div>
-
+                  </div>
                     {/* Language Selection */}
                     <div className="flex items-center justify-between">
                       <div>
@@ -903,7 +967,7 @@ const ProfileSettings = () => {
                           id="language"
                           name="language"
                           value={preferences.language}
-                          onChange={handlePreferenceChange}
+                          onChange={(e) => i18n.changeLanguage(e.target.value)}
                           className="mt-1 block w-full pl-3 cursor-pointer pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                         >
                           <option value="en">English</option>
@@ -923,7 +987,6 @@ const ProfileSettings = () => {
                   </button>
                 </div>
               </div>
-            </div>
           )}
         </div>
       </div>
