@@ -49,31 +49,8 @@ const BookClubsPage = () => {
   });
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
-<<<<<<< HEAD
   const [isClubSettingModalOpen, setIsClubSettingModalOpen] = useState(false);
   const [activeClubSettingTab, setActiveClubSettingTab] = useState('currentBook');
-=======
-  const socketRef = useRef(null);
-
-  // Open the websocket only on this page and only when logged in.
-  // Disconnect when leaving so no socket traffic happens on Home/Login/etc.
-  useEffect(() => {
-    const token = localStorage.getItem("NR_token");
-    if (!token) return;
-
-    const socket = io(SOCKET_URL, {
-      auth: { token },
-      reconnectionAttempts: 5, // don't retry forever if the server is unreachable
-    });
-    socketRef.current = socket;
-
-    return () => {
-      socket.disconnect();
-      socketRef.current = null;
-    };
-  }, []);
->>>>>>> d1e1f76 (web socket terminated for too many request block reason)
-
   const isModerator =members.some(
     (member) => member.id === userData?.id && member.role === 'moderator'
   );
